@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Builds
+dist/
+build/
+
+# Prisma
+*.db
+*db-journal
+**/generated/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Turbo
+.turbo/

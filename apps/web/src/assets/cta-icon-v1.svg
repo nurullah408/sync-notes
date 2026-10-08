@@ -1,0 +1,36 @@
+<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#312e81" />
+    </linearGradient>
+
+    <!-- A blur filter for the shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" />
+      <feOffset dx="4" dy="10" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" /> <!-- Softens the shadow opacity -->
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Shadow Path (slightly offset and blurred) -->
+  <path d="M 50 200 Q 100 50, 150 200 T 250 200 T 350 200 T 430 200 T 500 200 T 560 200 T 610 200 T 650 200"
+        fill="none"
+        stroke="black"
+        stroke-width="6"
+        filter="url(#shadow)"
+        opacity="0.1" />
+
+  <!-- Main Path -->
+  <path d="M 50 200 Q 100 50, 150 200 T 250 200 T 350 200 T 430 200 T 500 200 T 560 200 T 610 200 T 650 200"
+        fill="none"
+        stroke="url(#waveGrad)"
+        stroke-width="6"
+        stroke-linecap="round" />
+</svg>

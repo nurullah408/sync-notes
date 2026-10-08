@@ -1,0 +1,15 @@
+<svg width="100%" viewBox="0 0 680 280" role="img" xmlns="http://www.w3.org/2000/svg">
+  <rect x="40" y="40" width="280" height="220" rx="16" fill="currentColor" stroke="currentColor" stroke-width="0.5"/>
+  <g transform="translate(180, 130)">
+    <!-- Offset lines creating S-wave rhythm -->
+    <line x1="-50" y1="-36" x2="10"  y2="-36" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-30" y1="-18" x2="50"  y2="-18" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-50" y1="0"   x2="30"  y2="0"   stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-30" y1="18"  x2="50"  y2="18"  stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="-50" y1="36"  x2="10"  y2="36"  stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Fading sync pulse dots -->
+    <circle cx="56" cy="-18" r="5"   fill="currentColor" opacity="1"/>
+    <circle cx="56" cy="0"   r="3.5" fill="currentColor" opacity="0.5"/>
+    <circle cx="56" cy="18"  r="2"   fill="currentColor" opacity="0.25"/>
+  </g>
+</svg>

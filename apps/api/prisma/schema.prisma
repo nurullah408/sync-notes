@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                   Int      @id @default(autoincrement())
+  email                String   @unique
+  name                 String?
+  password_hash        String
+  hashed_refresh_token String?
+  isVerified           Boolean  @default(false)
+  otpCode              String?
+  otpCodeExpiresAt     DateTime?
+  passwordResetToken   String?
+  passwordResetTokenExpiresAt DateTime?
+  // Relations
+  notes                Note[]
+  folders              Folder[]
+  edges                Edge[]
+}
+
+model Note {
+  id            String   @id @default(uuid())
+  title         String
+  content       Json
+  searchContent String   @default("")
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
+
+  // Relations
+  folderId      String?
+  folder        Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+
+  outgoingEdges Edge[]   @relation("OutgoingEdges")
+  incomingEdges Edge[]   @relation("IncomingEdges")
+
+  @@index([userId, updatedAt, searchContent]) // Critical composite for fast delta indexing
+}
+
+model Folder {
+  id        String    @id @default(uuid())
+  name      String
+  color     String    @default("#ffffff")
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  // Relations
+  notes     Note[]
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model Edge {
+  id        String    @id @default(uuid())
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  sourceId  String
+  source    Note      @relation("OutgoingEdges", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId  String
+  target    Note      @relation("IncomingEdges", fields: [targetId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([sourceId, targetId])
+
+}
