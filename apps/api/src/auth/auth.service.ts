@@ -82,7 +82,6 @@ export class AuthService {
 
       return { message: 'Verification email sent' };
     }
-
   }
 
   async verifyEmail(email: string, otp: string) {

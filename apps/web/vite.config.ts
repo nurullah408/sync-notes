@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import path from "path";
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
 import svgr from "vite-plugin-svgr";
@@ -10,17 +10,15 @@ import svgr from "vite-plugin-svgr";
 export default defineConfig({
   plugins: [
     tanstackRouter({
-      target: 'react',
+      target: "react",
       autoCodeSplitting: true,
     }),
     react(),
     svgr({
-      svgrOptions: {
-
-      }
+      svgrOptions: {},
     }),
     tailwindcss(),
-    babel({ presets: [reactCompilerPreset()] })
+    babel({ presets: [reactCompilerPreset()] }),
   ],
   preview: {
     port: 5174,
@@ -30,11 +28,14 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true,
-    origin: 'http://localhost:5173',
+    origin: "http://localhost:5173",
+    fs: {
+      allow: [searchForWorkspaceRoot(import.meta.dirname)],
+    },
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, './src'),
-    }
-  }
-})
+      "@": path.resolve(import.meta.dirname, "./src"),
+    },
+  },
+});
