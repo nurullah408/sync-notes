@@ -9,32 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as VerifyEmailIndexRouteImport } from './routes/verify-email/index'
-import { Route as SignupIndexRouteImport } from './routes/signup/index'
-import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthNotesRouteRouteImport } from './routes/_auth/notes/route'
+import { Route as ForgotPasswordIndexRouteImport } from './routes/forgot-password/index'
+import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as ResetPasswordIndexRouteImport } from './routes/reset-password/index'
+import { Route as SignupIndexRouteImport } from './routes/signup/index'
+import { Route as VerifyEmailIndexRouteImport } from './routes/verify-email/index'
 import { Route as AuthNotesIndexRouteImport } from './routes/_auth/notes/index'
 import { Route as AuthNotesNoteIdRouteImport } from './routes/_auth/notes/$noteId'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/_auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyEmailIndexRoute = VerifyEmailIndexRouteImport.update({
-  id: '/verify-email/',
-  path: '/verify-email/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignupIndexRoute = SignupIndexRouteImport.update({
-  id: '/signup/',
-  path: '/signup/',
+const AuthNotesRouteRoute = AuthNotesRouteRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => AuthRoute,
+} as any)
+const ForgotPasswordIndexRoute = ForgotPasswordIndexRouteImport.update({
+  id: '/forgot-password/',
+  path: '/forgot-password/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginIndexRoute = LoginIndexRouteImport.update({
@@ -42,10 +44,20 @@ const LoginIndexRoute = LoginIndexRouteImport.update({
   path: '/login/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthNotesRouteRoute = AuthNotesRouteRouteImport.update({
-  id: '/notes',
-  path: '/notes',
-  getParentRoute: () => AuthRoute,
+const ResetPasswordIndexRoute = ResetPasswordIndexRouteImport.update({
+  id: '/reset-password/',
+  path: '/reset-password/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupIndexRoute = SignupIndexRouteImport.update({
+  id: '/signup/',
+  path: '/signup/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailIndexRoute = VerifyEmailIndexRouteImport.update({
+  id: '/verify-email/',
+  path: '/verify-email/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthNotesIndexRoute = AuthNotesIndexRouteImport.update({
   id: '/',
@@ -61,7 +73,9 @@ const AuthNotesNoteIdRoute = AuthNotesNoteIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/notes': typeof AuthNotesRouteRouteWithChildren
+  '/forgot-password/': typeof ForgotPasswordIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/reset-password/': typeof ResetPasswordIndexRoute
   '/signup/': typeof SignupIndexRoute
   '/verify-email/': typeof VerifyEmailIndexRoute
   '/notes/$noteId': typeof AuthNotesNoteIdRoute
@@ -69,7 +83,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordIndexRoute
   '/login': typeof LoginIndexRoute
+  '/reset-password': typeof ResetPasswordIndexRoute
   '/signup': typeof SignupIndexRoute
   '/verify-email': typeof VerifyEmailIndexRoute
   '/notes/$noteId': typeof AuthNotesNoteIdRoute
@@ -80,7 +96,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
   '/_auth/notes': typeof AuthNotesRouteRouteWithChildren
+  '/forgot-password/': typeof ForgotPasswordIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/reset-password/': typeof ResetPasswordIndexRoute
   '/signup/': typeof SignupIndexRoute
   '/verify-email/': typeof VerifyEmailIndexRoute
   '/_auth/notes/$noteId': typeof AuthNotesNoteIdRoute
@@ -91,19 +109,31 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/notes'
+    | '/forgot-password/'
     | '/login/'
+    | '/reset-password/'
     | '/signup/'
     | '/verify-email/'
     | '/notes/$noteId'
     | '/notes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/verify-email' | '/notes/$noteId' | '/notes'
+  to:
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
+    | '/signup'
+    | '/verify-email'
+    | '/notes/$noteId'
+    | '/notes'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/_auth/notes'
+    | '/forgot-password/'
     | '/login/'
+    | '/reset-password/'
     | '/signup/'
     | '/verify-email/'
     | '/_auth/notes/$noteId'
@@ -113,20 +143,15 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
+  ForgotPasswordIndexRoute: typeof ForgotPasswordIndexRoute
   LoginIndexRoute: typeof LoginIndexRoute
+  ResetPasswordIndexRoute: typeof ResetPasswordIndexRoute
   SignupIndexRoute: typeof SignupIndexRoute
   VerifyEmailIndexRoute: typeof VerifyEmailIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -134,18 +159,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify-email/': {
-      id: '/verify-email/'
-      path: '/verify-email'
-      fullPath: '/verify-email/'
-      preLoaderRoute: typeof VerifyEmailIndexRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signup/': {
-      id: '/signup/'
-      path: '/signup'
-      fullPath: '/signup/'
-      preLoaderRoute: typeof SignupIndexRouteImport
+    '/_auth/notes': {
+      id: '/_auth/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof AuthNotesRouteRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/forgot-password/': {
+      id: '/forgot-password/'
+      path: '/forgot-password'
+      fullPath: '/forgot-password/'
+      preLoaderRoute: typeof ForgotPasswordIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login/': {
@@ -155,12 +187,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth/notes': {
-      id: '/_auth/notes'
-      path: '/notes'
-      fullPath: '/notes'
-      preLoaderRoute: typeof AuthNotesRouteRouteImport
-      parentRoute: typeof AuthRoute
+    '/reset-password/': {
+      id: '/reset-password/'
+      path: '/reset-password'
+      fullPath: '/reset-password/'
+      preLoaderRoute: typeof ResetPasswordIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup/': {
+      id: '/signup/'
+      path: '/signup'
+      fullPath: '/signup/'
+      preLoaderRoute: typeof SignupIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email/': {
+      id: '/verify-email/'
+      path: '/verify-email'
+      fullPath: '/verify-email/'
+      preLoaderRoute: typeof VerifyEmailIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_auth/notes/': {
       id: '/_auth/notes/'
@@ -206,7 +252,9 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
+  ForgotPasswordIndexRoute: ForgotPasswordIndexRoute,
   LoginIndexRoute: LoginIndexRoute,
+  ResetPasswordIndexRoute: ResetPasswordIndexRoute,
   SignupIndexRoute: SignupIndexRoute,
   VerifyEmailIndexRoute: VerifyEmailIndexRoute,
 }

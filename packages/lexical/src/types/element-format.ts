@@ -1,3 +1,3 @@
 import { ElementFormatType } from "lexical";
 
-export { ElementFormatType };
+export type { ElementFormatType };

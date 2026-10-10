@@ -5,7 +5,9 @@ import { apiClient } from "./api-client";
 export const authQueryOptions = queryOptions({
   queryKey: ["auth"],
   queryFn: async () => {
-    const response = await apiClient(`${BASE_URL}/auth/me`);
+    const response = await apiClient(`${BASE_URL}/auth/me`, {
+      credentials: "include",
+    });
     if (response.status === 401) {
       return null;
     }
