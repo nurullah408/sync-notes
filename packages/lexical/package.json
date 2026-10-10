@@ -2,8 +2,12 @@
   "name": "@sync-notes/lexical",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,5 +22,8 @@
     }
   },
   "packageManager": "pnpm@11.24.0",
-  "type": "module"
+  "dependencies": {
+    "lexical": "0.44.0",
+    "zod": "^4.6.5"
+  }
 }
