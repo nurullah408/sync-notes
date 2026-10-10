@@ -9,15 +9,10 @@ import {
   type DOMExportOutput,
   type EditorConfig,
   type LexicalNode,
-  type SerializedLexicalNode,
-  type Spread,
 } from "lexical";
 import type { ReactElement } from "react";
 
-type SerializedInternalLinkNode = Spread<
-  { noteId: string },
-  SerializedLexicalNode
->;
+import type { SerializedInternalLinkNode } from "@sync-notes/lexical";
 
 export class InternalLinkNode extends DecoratorNode<ReactElement> {
   __noteId: string;

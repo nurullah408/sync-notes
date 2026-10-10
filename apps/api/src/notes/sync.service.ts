@@ -12,6 +12,7 @@ import { BaseNoteDto } from './dto/base-note.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { BaseEdgeDto } from '@/edge/dto/create-edge.dto';
+import { toPrismaJson } from './utils/prisma-json';
 
 @Injectable()
 export class SyncService {
@@ -236,16 +237,23 @@ export class SyncService {
   ) {
     switch (change.changeOperation) {
       case 'create': {
+        if (!payload?.content) {
+          throw new Error('Note content is required for create operations.');
+        }
         await tx.note.create({
           data: {
             ...payload,
+            content: toPrismaJson(payload?.content),
             id: change.entityId,
             userId,
-          } as PrismaClient.NoteUncheckedCreateInput,
+          },
         });
         break;
       }
       case 'update': {
+        if (!payload?.content) {
+          throw new Error('Note content needed to update operations.');
+        }
         const existing = await tx.note.findUnique({
           where: { id: change.entityId },
           select: { id: true, userId: true },
@@ -256,8 +264,9 @@ export class SyncService {
           where: { id: change.entityId },
           data: {
             ...payload,
+            content: toPrismaJson(payload?.content),
             userId,
-          } as PrismaClient.NoteUncheckedUpdateInput,
+          },
         });
         break;
       }
@@ -307,7 +316,7 @@ export class SyncService {
           data: {
             ...payload,
             userId,
-          } as PrismaClient.FolderUncheckedUpdateInput,
+          },
         });
         break;
       }
@@ -358,7 +367,7 @@ export class SyncService {
           data: {
             ...payload,
             userId,
-          } as PrismaClient.EdgeUncheckedUpdateInput,
+          },
         });
         break;
       }
@@ -375,7 +384,7 @@ export class SyncService {
             ...payload,
             isDeleted: true,
             deletedAt: serverTime,
-          } as PrismaClient.EdgeUncheckedUpdateInput,
+          },
         });
         break;
       }

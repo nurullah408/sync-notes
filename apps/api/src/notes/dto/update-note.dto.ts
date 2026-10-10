@@ -10,6 +10,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+import type { SyncNotesEditorState } from '@sync-notes/lexical';
+
 export class UpdateNoteDto extends PartialType(BaseNoteDto) {
   @IsUUID()
   @IsNotEmpty()
@@ -22,7 +24,7 @@ export class UpdateNoteDto extends PartialType(BaseNoteDto) {
   searchContent!: string;
 
   @IsString()
-  content!: string;
+  content!: SyncNotesEditorState;
 
   @IsOptional()
   @IsString()

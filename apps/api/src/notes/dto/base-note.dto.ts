@@ -8,6 +8,8 @@ import {
   IsOptional,
 } from 'class-validator';
 
+import type { SyncNotesEditorState } from '@sync-notes/lexical';
+
 export class BaseNoteDto {
   @IsUUID()
   @IsNotEmpty()
@@ -23,7 +25,7 @@ export class BaseNoteDto {
 
   @IsString()
   @IsNotEmpty()
-  content!: string; // To Map seamlessly to Prisma's native JSON typing
+  content!: SyncNotesEditorState; // To Map seamlessly to Prisma's native JSON typing
 
   @IsString()
   searchContent!: string;

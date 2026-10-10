@@ -2,13 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotesService } from './notes.service';
 import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '../prisma/prisma.service';
-import { SyncService } from './sync.service';
+import { CreateNoteDto } from './dto/create-note.dto';
+
+type MockPrisma = {
+  note: {
+    findUnique: jest.Mock;
+    findMany: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+    upsert: jest.Mock;
+  };
+  $queryRaw: jest.Mock;
+};
 
 describe('NotesService', () => {
   let service: NotesService;
-  let prisma: Prisma;
   // 1. Create a Mock Prisma Object
-  const mockPrisma = {
+  const mockPrisma: MockPrisma = {
     note: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
@@ -17,16 +28,13 @@ describe('NotesService', () => {
       delete: jest.fn(),
       upsert: jest.fn(),
     },
-    $transaction: jest.fn((callback: (prisma: Prisma) => void) =>
-      callback(mockPrisma),
-    ), // Mocking transactions
+    $queryRaw: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotesService,
-        SyncService,
         {
           provide: Prisma,
           useValue: mockPrisma,
@@ -35,23 +43,46 @@ describe('NotesService', () => {
     }).compile();
 
     service = module.get<NotesService>(NotesService);
-    prisma = module.get<Prisma>(Prisma);
+    jest.resetAllMocks();
   });
 
   afterEach(() => {
     jest.clearAllMocks(); // Clean up between tests
   });
 
-  describe('findOne', () => {
-    it('should return a note if it exists', async () => {
-      const mockNote = { id: '1', title: 'Test Note', userId: 123 };
-      mockPrisma?.note?.findUnique?.mockResolvedValue(mockNote);
+  describe('create', () => {
+    it('should preserve lexical editor state when creating a note', async () => {
+      const content = {
+        root: {
+          type: 'root',
+          version: 1,
+          indent: 0,
+          format: 'start',
+          direction: null,
+          children: [],
+        },
+      };
 
-      const result = await service.findOne(123, '1');
+      const dto: CreateNoteDto = {
+        id: 'note-1',
+        title: 'test note',
+        content,
+        searchContent: '',
+        isDeleted: false,
+      };
 
-      expect(result).toEqual(mockNote);
-      expect(mockPrisma?.note?.findUnique).toHaveBeenCalledWith({
-        where: { id: '1', userId: 123 },
+      const createdNote = { ...dto, userId: 123 };
+
+      mockPrisma.note.create.mockResolvedValue(createdNote);
+
+      const result = await service.create(123, dto);
+
+      expect(result).toEqual(createdNote);
+      expect(mockPrisma?.note?.create).toHaveBeenCalledWith({
+        data: {
+          ...dto,
+          userId: 123,
+        },
       });
     });
 
@@ -60,6 +91,46 @@ describe('NotesService', () => {
 
       await expect(service.findOne(123, '999')).rejects.toThrow(
         NotFoundException,
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    it('Should return notes for the user ordered by updatedAt descending', async () => {
+      const notes = [{ id: 'note-1' }, { id: 'note-2' }];
+      mockPrisma.note.findMany.mockResolvedValue(notes);
+
+      const result = await service.findAll(123);
+
+      expect(result).toEqual(notes);
+
+      expect(mockPrisma.note.findMany).toHaveBeenCalledWith({
+        where: { userId: 123 },
+        orderBy: { updatedAt: 'desc' },
+      });
+    });
+  });
+
+  describe('remove', () => {
+    it('Should delete a note belonging to a user', async () => {
+      const deletedNote = { id: 'note-1', userId: 123 };
+      mockPrisma.note.delete.mockResolvedValue(deletedNote);
+
+      const result = await service.remove(123, 'note-1');
+
+      expect(result).toEqual(deletedNote);
+      expect(mockPrisma.note.delete).toHaveBeenCalledWith({
+        where: {
+          userId: 123,
+          id: 'note-1',
+        },
+      });
+    });
+
+    it('Should propagate an error if prisma cannot delete a note', async () => {
+      mockPrisma.note.delete.mockRejectedValue(new Error('Database Error'));
+      await expect(service.remove(123, 'note-2')).rejects.toThrow(
+        'Database Error',
       );
     });
   });
