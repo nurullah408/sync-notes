@@ -12,7 +12,6 @@ import { BaseNoteDto } from './dto/base-note.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { BaseEdgeDto } from '@/edge/dto/create-edge.dto';
-import { toPrismaJson } from './utils/prisma-json';
 
 @Injectable()
 export class SyncService {
@@ -243,7 +242,6 @@ export class SyncService {
         await tx.note.create({
           data: {
             ...payload,
-            content: toPrismaJson(payload?.content),
             id: change.entityId,
             userId,
           },
@@ -264,7 +262,6 @@ export class SyncService {
           where: { id: change.entityId },
           data: {
             ...payload,
-            content: toPrismaJson(payload?.content),
             userId,
           },
         });

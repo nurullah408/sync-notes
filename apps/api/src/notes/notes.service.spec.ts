@@ -52,7 +52,7 @@ describe('NotesService', () => {
 
   describe('create', () => {
     it('should preserve lexical editor state when creating a note', async () => {
-      const content = {
+      const content = JSON.stringify({
         root: {
           type: 'root',
           version: 1,
@@ -61,7 +61,7 @@ describe('NotesService', () => {
           direction: null,
           children: [],
         },
-      };
+      });
 
       const dto: CreateNoteDto = {
         id: 'note-1',
@@ -69,6 +69,8 @@ describe('NotesService', () => {
         content,
         searchContent: '',
         isDeleted: false,
+        folderId: null,
+        updatedAt: new Date(),
       };
 
       const createdNote = { ...dto, userId: 123 };
