@@ -12,4 +12,5 @@ export const QUERY_KEYS = {
     [...QUERY_KEYS.foldersAll, { filters }] as const,
   foldersDetail: (id: string) =>
     [...QUERY_KEYS.foldersAll, "detail", id] as const,
+  sidebarQueryKey: ["sidebar"] as const,
 };

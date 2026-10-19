@@ -5,21 +5,19 @@ import { useDebouncedCallback } from "@/hooks/useDebounce.ts";
 import { INITIAL_EDITOR_STATE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Note } from "@/types/entities/Note";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { $getRoot, type EditorState } from "lexical";
 import { Check, LoaderPinwheel, Search } from "lucide-react";
 import { type ChangeEvent } from "react";
 import { useSyncContext } from "@/context/SyncContext";
 import { useGlobalStore } from "@/store/store.tsx";
-import { db } from "@/db/syncNotesDb.ts";
-import { useLiveQuery } from "dexie-react-hooks";
 import { useHandleInternalLinkClick } from "../-hooks/useHandleInternalLinkClick";
 import Profile from "@/components/Profile";
+import { useNotesCollection } from "@/collections";
+import { eq, useLiveQuery } from "@tanstack/react-db";
 
 export function Note() {
   const params = useParams({ from: "/_auth/notes/$noteId" });
-
-  const navigate = useNavigate();
 
   const { open } = useSidebar();
 
@@ -27,40 +25,48 @@ export function Note() {
 
   const openModal = useGlobalStore((state) => state.openModal);
 
-  const note = useLiveQuery(async () => {
-    const existing = await db.notes.get(params.noteId);
-    if (existing) {
-      return existing;
-    }
-    return await navigate({
-      to: '/notes',
-    })
-  }, [params.noteId]);
+  const notesCollection = useNotesCollection();
 
-  const updateNoteTitle = useDebouncedCallback(
-    async (title: string) => {
-      await db.notes.update(params.noteId, { title, updatedAt: new Date().toISOString() });
-    },
-    500,
-  );
+  const { data: notes } = useLiveQuery({
+    query: (q) =>
+      q
+        .from({ note: notesCollection })
+        .where(({ note }) => eq(note.id, params.noteId))
+        .select(({ note }) => ({
+          id: note.id,
+          title: note.title,
+          content: note.content,
+          searchContent: note.searchContent,
+          createdAt: note.createdAt,
+          updatedAt: note.updatedAt,
+          isDeleted: note.isDeleted,
+        })),
+  });
 
-  const updateNoteContent = useDebouncedCallback(
-    async (editorState: EditorState) => {
-      const { json, textContent } = editorState.read(() => {
-        const root = $getRoot();
-        const json = root.isEmpty()
-          ? INITIAL_EDITOR_STATE // This is already stringified
-          : JSON.stringify(editorState.toJSON());
-        return { json, textContent: root.getTextContent() };
-      });
+  const note = notes[0];
 
-      await db.notes.update(params.noteId, {
-        content: json,
-        searchContent: textContent,
-        updatedAt: new Date().toISOString(),
-      } as Note);
-    },
-  500);
+  const updateTitle = useDebouncedCallback((title: string) => {
+    notesCollection.update(params.noteId, (draft: Note) => {
+      draft.title = title;
+      draft.updatedAt = new Date().toISOString();
+    });
+  }, 500);
+
+  const updateContent = useDebouncedCallback((editorState: EditorState) => {
+    const { json, textContent } = editorState.read(() => {
+      const root = $getRoot();
+      const json = root.isEmpty()
+        ? INITIAL_EDITOR_STATE // This is already stringified
+        : JSON.stringify(editorState.toJSON());
+      return { json, textContent: root.getTextContent() };
+    });
+
+    notesCollection.update(params.noteId, (draft: Note) => {
+      draft.content = json;
+      draft.searchContent = textContent;
+      draft.updatedAt = new Date().toISOString();
+    });
+  }, 500);
 
   function onOpenSearch() {
     openModal("GLOBAL_SEARCH", null);
@@ -68,11 +74,11 @@ export function Note() {
 
   function onChangeTitle(event: ChangeEvent<HTMLInputElement>) {
     const { value } = event.currentTarget;
-    updateNoteTitle(value);
+    updateTitle(value);
   }
 
   function onEditorChange(editorState: EditorState) {
-    updateNoteContent(editorState);
+    updateContent(editorState);
   }
 
   useHandleInternalLinkClick();
@@ -82,13 +88,16 @@ export function Note() {
   const content = note ? note.content : INITIAL_EDITOR_STATE;
 
   if (!note) {
-    <div
-      className="px-4 pt-2 border rounded h-full w-full"
-    >
+    <div className="px-4 pt-2 border rounded h-full w-full">
       {/* Header */}
       <div className="flex gap-1 items-center justify-between">
         {/* Note header left side */}
-        <div className={cn("flex gap-1 items-center", open ? "invisible pointer-events-none" : "visible")}>
+        <div
+          className={cn(
+            "flex gap-1 items-center",
+            open ? "invisible pointer-events-none" : "visible",
+          )}
+        >
           <SidebarTrigger />
         </div>
         <Button
@@ -116,23 +125,26 @@ export function Note() {
         </div>
       </div>
       <div className="relative flex flex-col gap-2 h-full overflow-hidden">
-        <div className="w-full animate-pulse duration-300"/>
+        <div className="w-full animate-pulse duration-300" />
         <h3 className="text-sm font-semibold text-gray-600">
           Last updated on{" "}
           <span className="italic text-sm animate-pulse duration-300" />
         </h3>
         <div className="h-[80%] rounded-lg overflow-y-auto animate-pulse duration-300" />
       </div>
-    </div>
+    </div>;
   }
 
   return (
-    <div
-      className="px-4 pt-2 border rounded h-full w-full"
-    >
+    <div className="px-4 pt-2 border rounded h-full w-full">
       <div className="flex gap-1 items-center justify-between">
         {/* Note header left side */}
-        <div className={cn("flex gap-1 items-center rounded-xl", open ? "invisible pointer-events-none" : "visible")}>
+        <div
+          className={cn(
+            "flex gap-1 items-center rounded-xl",
+            open ? "invisible pointer-events-none" : "visible",
+          )}
+        >
           <SidebarTrigger />
         </div>
         <Button
@@ -160,9 +172,11 @@ export function Note() {
         </div>
       </div>
       <div className="relative flex flex-col gap-2 h-full overflow-hidden">
-        <label htmlFor="noteTitle" className="sr-only">Note Title:</label>
+        <label htmlFor="noteTitle" className="sr-only">
+          Note Title:
+        </label>
         <input
-          key={`${params.noteId}-${note ? 'new' : 'old'}`}
+          key={`${params.noteId}-${note ? "new" : "old"}`}
           name="noteTitle"
           className="text-3xl my-2 w-full border-none underline font-extrabold focus:outline-none"
           type="text"

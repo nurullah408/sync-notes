@@ -1,19 +1,19 @@
-import type { Folder } from "@/types/entities/Folder";
-import type { Note } from "@/types/entities/Note";
+import type { FolderMeta } from "@/types/entities/Folder";
+import type { NoteMeta } from "@/types/entities/Note";
 import type { FlatListItem } from "@/types/util-types/FlatListItem";
 import type { FolderItem } from "@/types/util-types/FolderItem";
 import type { NoteItem } from "@/types/util-types/NoteItem";
 
 export function buildFlatList(
-  notes: Note[],
-  folders: Folder[],
+  notes: NoteMeta[],
+  folders: FolderMeta[],
   collapsedFolders: Record<string, boolean>,
 ): (FolderItem | NoteItem)[] {
   const result: FlatListItem[] = [];
 
-  const notesByFolder: Map<string, Note[]> = new Map();
+  const notesByFolder: Map<string, NoteMeta[]> = new Map();
 
-  const rootNotes: Note[] = [];
+  const rootNotes: NoteMeta[] = [];
 
   // Build a set of existing folder IDs for fast lookup
   const existingFolderIds = new Set(folders.map((f) => f.id));

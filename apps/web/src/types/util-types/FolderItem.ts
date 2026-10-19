@@ -1,6 +1,6 @@
-import type { Folder } from "../entities/Folder";
+import type { FolderMeta } from "../entities/Folder";
 
-export interface FolderItem extends Folder {
+export interface FolderItem extends FolderMeta {
   type: "folder";
   isCollapsed: boolean;
   depth: number;

@@ -1,6 +1,5 @@
-import { db } from "@/db/syncNotesDb";
+import { useNotesCollection } from "@/collections";
 import { cn } from "@/lib/utils";
-import { useLiveQuery } from "dexie-react-hooks";
 import { FileText } from "lucide-react";
 import type { MouseEvent } from "react";
 
@@ -11,17 +10,25 @@ interface IInternalLinkComponentProps {
 
 export function InternalLinkComponent({
   noteId,
-  nodeKey }: IInternalLinkComponentProps) {
+  nodeKey,
+}: IInternalLinkComponentProps) {
+  const notes = useNotesCollection();
 
-  const note = useLiveQuery(async () => await db.notes.get(noteId));
+  const hasNote = notes.has(noteId);
 
-  if (!note) {
+  if (!hasNote) {
     return (
-      <div data-note-id={noteId} onClick={(e) => e.preventDefault()} className="internal-link animate-pulse duration-400 cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80">
+      <div
+        data-note-id={noteId}
+        onClick={(e) => e.preventDefault()}
+        className="internal-link animate-pulse duration-400 cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80"
+      >
         Loading
       </div>
-    )
+    );
   }
+
+  const note = notes.get(noteId);
 
   const title = note?.title;
 
@@ -32,25 +39,26 @@ export function InternalLinkComponent({
     e.stopPropagation();
     if (isDeleted) return;
     window.dispatchEvent(
-      new CustomEvent('internal-link:click', {
+      new CustomEvent("internal-link:click", {
         detail: { noteId, nodeKey },
-      })
+      }),
     );
-  }
+  };
 
   return (
     <a
       href={`/notes/${noteId}`}
       onClick={handleClick}
       data-note-id={noteId}
-      className={
-        cn("internal-link cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80", {
+      className={cn(
+        "internal-link cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80",
+        {
           "line-through": isDeleted,
-        })
-      }
+        },
+      )}
     >
       <FileText className="size-4" />
-      {title|| "Untitled"}
+      {title || "Untitled"}
     </a>
   );
 }

@@ -7,72 +7,66 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import {
-  FolderPlus,
-  Plus,
-} from "lucide-react";
-import { useLiveQuery } from "dexie-react-hooks";
+import { FolderPlus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
-import { useMemo, useState } from "react";
+import { useMemo, useReducer } from "react";
 import { buildFlatList } from "@/lib/sidebar-utils.ts";
 import type { FlatListItem } from "@/types/util-types/FlatListItem.ts";
 import type { NoteItem } from "@/types/util-types/NoteItem.ts";
 import { useGlobalStore } from "@/store/store.tsx";
-import { db } from "@/db/syncNotesDb";
 import type { Folder } from "@/types/entities/Folder";
 import type { Note } from "@/types/entities/Note";
 import { INITIAL_EDITOR_STATE } from "@/lib/constants";
 import { FolderRow } from "./FolderRow";
 import { NoteRow } from "./NoteRow";
+import { useQuery } from "@tanstack/react-query";
+import { foldersCollection, notesCollection } from "@/collections";
+import { getSidebar } from "@/lib/api";
+import { initialSidebarState, sidebarReducer } from "../-hooks/useSidebarState";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const openModal = useGlobalStore((state) => state.openModal);
+  // Sidebar Query
+  const { data, isLoading } = useQuery({
+    queryKey: ["sidebar"],
+    queryFn: getSidebar,
+  });
 
-  const [collapsedFolders, setCollapsedFolders] = useState<
-    Record<string, boolean>
-    >({});
-
-  const [editingFolders, setEditingFolders] = useState<Set<string>>(new Set());
-
-  const notes:Note[] | undefined = useLiveQuery(
-    () => {
-      return db.notes.filter((n) => !n.isDeleted).toArray();
-    }
+  const [sidebarState, sidebarDispatch] = useReducer(
+    sidebarReducer,
+    initialSidebarState,
   );
 
-  const folders:Folder[] | undefined = useLiveQuery(
-    () => {
-      return db.folders.filter((f) => !f.isDeleted).toArray();
-    }
-  )
+  const toggleFolder = (folderId: string) => {
+    sidebarDispatch({ type: "toggle_folder", payload: folderId });
+  };
+
+  const visibleItems = useMemo(() => {
+    if (isLoading || !data) return [];
+
+    const { notes, folders } = data.data;
+
+    return buildFlatList(notes, folders, sidebarState.collapsedFolders);
+  }, [data, sidebarState.collapsedFolders, isLoading]);
+
+  const openModal = useGlobalStore((state) => state.openModal);
 
   const saveNote = async (note: Partial<Note> & { id: string }) => {
-    await db.notes.update(note.id, {
+    notesCollection.update(note.id, (draft) => ({
+      ...draft,
       ...note,
-    });
-  }
+    }));
+  };
 
   const createNote = async (note: Note) => {
-    await db.notes.add({ ...note });
-  }
+    notesCollection.insert({ ...note });
+  };
 
   const createFolder = async (folder: Folder) => {
-    await db.folders.add({ ...folder });
-    setEditingFolders((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(folder.id)
-      return newSet;
-    });
-  }
-
-  const toggleFolder = (folderId: string) => {
-    setCollapsedFolders((prev) => ({
-      ...prev,
-      [folderId]: !prev[folderId],
-    }));
+    foldersCollection.insert({ ...folder });
+    sidebarDispatch({ type: "start_editing_folder", payload: folder.id });
   };
 
   const onCreateNewNote = async () => {
@@ -94,7 +88,7 @@ export function AppSidebar() {
 
   const onCreateNewFolder = async () => {
     const newFolderId = crypto.randomUUID();
-    const newFolder:Folder = {
+    const newFolder: Folder = {
       id: newFolderId,
       name: "Untitled",
       color: "#ffff",
@@ -102,18 +96,23 @@ export function AppSidebar() {
       deletedAt: null,
       isDeleted: false,
       updatedAt: new Date().toISOString(),
-    }
+    };
     await createFolder(newFolder);
-  }
+  };
 
   const onDelete = async (itemType: "folder" | "note", itemId: string) => {
+    if (!visibleItems.length || !data) {
+      return;
+    }
+    const { notes } = data.data;
+
     if (itemType === "note") {
       const active = location.pathname.includes(`/notes/${itemId}`);
       if (active) {
         let nextRoute = "/notes";
         let nextParams = {};
 
-        if (notes && notes.length > 1) {
+        if (data.data.notes && data.data.notes.length > 1) {
           const currentIndex = notes.findIndex((n) => n.id === itemId);
           const nextNote =
             currentIndex === notes.length - 1
@@ -138,13 +137,6 @@ export function AppSidebar() {
   const onMoveNote = (noteId: string) => {
     openModal("MOVE_NOTE", { noteId });
   };
-
-  const visibleItems = useMemo(() => {
-    if (!notes || !folders) return [];
-    return buildFlatList(notes, folders, collapsedFolders);
-  }, [notes, folders, collapsedFolders]);
-
-  const isLoading = !folders || !notes;
 
   return (
     <Sidebar>
@@ -187,16 +179,16 @@ export function AppSidebar() {
                   <div key={item.id}>
                     <FolderRow
                       folder={{ ...item }}
-                      isOpen={!collapsedFolders[item.id]}
+                      isOpen={!sidebarState.collapsedFolders[item.id]}
                       onDelete={onDelete}
-                      editing={editingFolders.has(item.id)}
-                      setEditing={setEditingFolders}
+                      editing={sidebarState.editingFolders.has(item.id)}
+                      sidebarDispatch={sidebarDispatch}
                       onToggle={() => toggleFolder(item.id)}
                     />
                     <div
                       className={cn(
                         "overflow-hidden mt-2 transition-[max-height,opacity] duration-300 ease-in-out",
-                        collapsedFolders[item.id]
+                        sidebarState.collapsedFolders[item.id]
                           ? "max-h-0 opacity-0"
                           : "max-h-[100px] opacity-100",
                       )}

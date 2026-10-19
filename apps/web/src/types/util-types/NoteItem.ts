@@ -1,6 +1,6 @@
-import type { Note } from "../entities/Note";
+import type { NoteMeta } from "../entities/Note";
 
-export interface NoteItem extends Note {
+export interface NoteItem extends NoteMeta {
   type: "note";
   depth: number;
 }
