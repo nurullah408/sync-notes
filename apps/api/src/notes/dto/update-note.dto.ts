@@ -24,7 +24,7 @@ export class UpdateNoteDto extends PartialType(BaseNoteDto) {
   searchContent!: string;
 
   @IsString()
-  content!: SyncNotesEditorState;
+  content!: string;
 
   @IsOptional()
   @IsString()

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { INITIALIZE_EDITOR_TAG } from "@/lib/constants";
 
 export function InitializePlugin({ json }: { json: string | null }) {
   const [editor] = useLexicalComposerContext();
@@ -18,9 +19,17 @@ export function InitializePlugin({ json }: { json: string | null }) {
     }
 
     // Genuinely new content (navigation, sync) — push it into the editor
-    queueMicrotask(() => { // This is done in a microtask to avoid getting flushSync warnings from react
+    queueMicrotask(() => {
+      // This is done in a microtask to avoid getting flushSync warnings from react
       const editorState = editor.parseEditorState(json);
-      editor.setEditorState(editorState);
+
+      editor.setEditorState(editorState, {
+        tag: INITIALIZE_EDITOR_TAG,
+      });
+
+      editor.focus(undefined, {
+        defaultSelection: "rootEnd",
+      });
     });
     lastJsonRef.current = json;
   }, [json, editor]);

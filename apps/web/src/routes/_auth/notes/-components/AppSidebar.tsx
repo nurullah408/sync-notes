@@ -7,10 +7,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import {
-  FolderPlus,
-  Plus,
-} from "lucide-react";
+import { FolderPlus, Plus } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { cn } from "@/lib/utils.ts";
 import { useMemo, useState } from "react";
@@ -24,6 +21,8 @@ import type { Note } from "@/types/entities/Note";
 import { INITIAL_EDITOR_STATE } from "@/lib/constants";
 import { FolderRow } from "./FolderRow";
 import { NoteRow } from "./NoteRow";
+import { useQuery } from "@tanstack/react-query";
+import { getSidebar } from "@/api/sidebar.api";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -31,42 +30,35 @@ export function AppSidebar() {
 
   const openModal = useGlobalStore((state) => state.openModal);
 
+  const { data, isLoading } = useQuery({
+    queryKey: ["sidebar"],
+    queryFn: getSidebar,
+  });
+
   const [collapsedFolders, setCollapsedFolders] = useState<
     Record<string, boolean>
-    >({});
+  >({});
 
   const [editingFolders, setEditingFolders] = useState<Set<string>>(new Set());
-
-  const notes:Note[] | undefined = useLiveQuery(
-    () => {
-      return db.notes.filter((n) => !n.isDeleted).toArray();
-    }
-  );
-
-  const folders:Folder[] | undefined = useLiveQuery(
-    () => {
-      return db.folders.filter((f) => !f.isDeleted).toArray();
-    }
-  )
 
   const saveNote = async (note: Partial<Note> & { id: string }) => {
     await db.notes.update(note.id, {
       ...note,
     });
-  }
+  };
 
   const createNote = async (note: Note) => {
     await db.notes.add({ ...note });
-  }
+  };
 
   const createFolder = async (folder: Folder) => {
     await db.folders.add({ ...folder });
     setEditingFolders((prev) => {
       const newSet = new Set(prev);
-      newSet.add(folder.id)
+      newSet.add(folder.id);
       return newSet;
     });
-  }
+  };
 
   const toggleFolder = (folderId: string) => {
     setCollapsedFolders((prev) => ({
@@ -94,7 +86,7 @@ export function AppSidebar() {
 
   const onCreateNewFolder = async () => {
     const newFolderId = crypto.randomUUID();
-    const newFolder:Folder = {
+    const newFolder: Folder = {
       id: newFolderId,
       name: "Untitled",
       color: "#ffff",
@@ -102,11 +94,13 @@ export function AppSidebar() {
       deletedAt: null,
       isDeleted: false,
       updatedAt: new Date().toISOString(),
-    }
+    };
     await createFolder(newFolder);
-  }
+  };
 
   const onDelete = async (itemType: "folder" | "note", itemId: string) => {
+    if (!data) return;
+    const { notes } = data.data;
     if (itemType === "note") {
       const active = location.pathname.includes(`/notes/${itemId}`);
       if (active) {
@@ -140,11 +134,10 @@ export function AppSidebar() {
   };
 
   const visibleItems = useMemo(() => {
-    if (!notes || !folders) return [];
+    if (isLoading || !data) return [];
+    const { notes, folders } = data.data;
     return buildFlatList(notes, folders, collapsedFolders);
-  }, [notes, folders, collapsedFolders]);
-
-  const isLoading = !folders || !notes;
+  }, [data, collapsedFolders]);
 
   return (
     <Sidebar>

@@ -1,4 +1,3 @@
-import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -24,7 +23,7 @@ import {
 
 import type { EditorState } from "lexical";
 import { InitializePlugin } from "@/routes/_auth/notes/-components/lexical-plugins/InitializePlugin";
-import { EDITOR_THEME } from "@/lib/constants";
+import { EDITOR_THEME, INITIALIZE_EDITOR_TAG } from "@/lib/constants";
 import { SlashMenuPlugin } from "@/routes/_auth/notes/-components/lexical-plugins/SlashMenuPlugin";
 import { useRef, type MouseEvent } from "react";
 import { InternalLinkNode } from "@/lib/lexical/nodes/InternalLinkNode";
@@ -117,9 +116,14 @@ export function Editor({
       <ListPlugin />
       <CheckListPlugin />
       <InitializePlugin json={initialContent} />
-      <OnChangePlugin onChange={onChange} />
+      <OnChangePlugin
+        ignoreSelectionChange
+        onChange={(editorState, _, tags) => {
+          if (tags.has(INITIALIZE_EDITOR_TAG)) return;
+          onChange(editorState);
+        }}
+      />
       <HistoryPlugin />
-      <AutoFocusPlugin />
       <MarkdownShortcutPlugin transformers={CUSTOM_MARKDOWN_TRANSFORMERS} />
       <SlashMenuPlugin />
       <InternalLinkPlugin nodeId={currentNodeId} />

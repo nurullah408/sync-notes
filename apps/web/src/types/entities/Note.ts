@@ -6,3 +6,5 @@ export interface Note extends Entity {
   content: string;
   searchContent: string;
 }
+
+export interface NoteMeta extends Omit<Note, "content" | "searchContent"> {}

@@ -7,7 +7,6 @@ import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { Prisma } from '../prisma/prisma.service';
 import { SearchNoteResult } from '@/types';
-import { toPrismaJson } from './utils/prisma-json';
 
 @Injectable()
 export class NotesService {
@@ -17,7 +16,6 @@ export class NotesService {
     const note = await this.prisma.note.create({
       data: {
         ...createNoteDto,
-        content: toPrismaJson(createNoteDto.content),
         userId,
       },
     });
@@ -62,7 +60,6 @@ export class NotesService {
       },
       data: {
         ...updateNoteDto,
-        content: toPrismaJson(updateNoteDto.content),
         version: { increment: 1 },
       },
     });

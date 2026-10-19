@@ -9,9 +9,6 @@
         "outDir": "dist"
       }
     ],
-    "deleteOutDir": true,
-    "plugins": [
-      "@nestjs/swagger"
-    ]
+    "deleteOutDir": true
   }
 }

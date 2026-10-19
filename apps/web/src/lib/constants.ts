@@ -97,7 +97,7 @@ export const EDITOR_THEME = {
     url: "text-primary underline",
     variable: "text-chart-5",
   },
-  internalLink: "p-1 bg-muted rounded-md text-foreground hover:bg-accent"
+  internalLink: "p-1 bg-muted rounded-md text-foreground hover:bg-accent",
 };
 
 export const EMPTY_CONTENT = "(An empty Note)";
@@ -109,3 +109,5 @@ export const STRAND_LENGTH = 80;
 export const PHASE_DIFF = Math.PI;
 
 export const LOCAL_STORAGE_SYNC_KEY = "last_synced_at";
+
+export const INITIALIZE_EDITOR_TAG = "initialize-editor";
