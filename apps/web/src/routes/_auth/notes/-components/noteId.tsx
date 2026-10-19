@@ -5,21 +5,21 @@ import { useDebouncedCallback } from "@/hooks/useDebounce.ts";
 import { INITIAL_EDITOR_STATE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Note } from "@/types/entities/Note";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { $getRoot, type EditorState } from "lexical";
 import { Check, LoaderPinwheel, Search } from "lucide-react";
 import { type ChangeEvent } from "react";
 import { useSyncContext } from "@/context/SyncContext";
 import { useGlobalStore } from "@/store/store.tsx";
-import { db } from "@/db/syncNotesDb.ts";
-import { useLiveQuery } from "dexie-react-hooks";
 import { useHandleInternalLinkClick } from "../-hooks/useHandleInternalLinkClick";
 import Profile from "@/components/Profile";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { getNote, updateNote } from "@/api/notes.api";
+import { queryClient } from "@/lib/query-client";
 
 export function Note() {
   const params = useParams({ from: "/_auth/notes/$noteId" });
-
-  const navigate = useNavigate();
 
   const { open } = useSidebar();
 
@@ -27,22 +27,30 @@ export function Note() {
 
   const openModal = useGlobalStore((state) => state.openModal);
 
-  const note = useLiveQuery(async () => {
-    const existing = await db.notes.get(params.noteId);
-    if (existing) {
-      return existing;
-    }
-    return await navigate({
-      to: '/notes',
-    })
-  }, [params.noteId]);
+  const { data, isLoading } = useQuery({
+    queryKey: QUERY_KEYS.notesDetail(params.noteId),
+    queryFn: () => getNote({ noteId: params.noteId }),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const updateNoteTitle = useDebouncedCallback(
-    async (title: string) => {
-      await db.notes.update(params.noteId, { title, updatedAt: new Date().toISOString() });
+  const { mutate } = useMutation({
+    mutationFn: updateNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.notesDetail(params.noteId),
+      });
     },
-    500,
-  );
+  });
+
+  const note = data?.data;
+
+  const updateNoteTitle = useDebouncedCallback(async (title: string) => {
+    mutate({
+      id: params.noteId,
+      title,
+      updatedAt: new Date().toISOString(),
+    });
+  }, 500);
 
   const updateNoteContent = useDebouncedCallback(
     async (editorState: EditorState) => {
@@ -54,13 +62,15 @@ export function Note() {
         return { json, textContent: root.getTextContent() };
       });
 
-      await db.notes.update(params.noteId, {
+      mutate({
+        id: params.noteId,
         content: json,
         searchContent: textContent,
         updatedAt: new Date().toISOString(),
       } as Note);
     },
-  500);
+    500,
+  );
 
   function onOpenSearch() {
     openModal("GLOBAL_SEARCH", null);
@@ -81,58 +91,66 @@ export function Note() {
 
   const content = note ? note.content : INITIAL_EDITOR_STATE;
 
-  if (!note) {
-    <div
-      className="px-4 pt-2 border rounded h-full w-full"
-    >
-      {/* Header */}
-      <div className="flex gap-1 items-center justify-between">
-        {/* Note header left side */}
-        <div className={cn("flex gap-1 items-center", open ? "invisible pointer-events-none" : "visible")}>
-          <SidebarTrigger />
-        </div>
-        <Button
-          variant={"outline"}
-          className="justify-between w-[40%] rounded-[10px]"
-          onClick={onOpenSearch}
-        >
-          <Search />
-          {"cmd+k"}
-        </Button>
-        {/* Note header right side */}
-        <div className="flex gap-1 items-center">
-          <div className="flex items-center gap-1">
-            {isSyncing ? (
-              <>
-                <LoaderPinwheel className="text-gray-500 duration-400 animate-spin size-4" />
-              </>
-            ) : (
-              <>
-                <Check className="text-accent-foreground size-4" />
-              </>
+  if (isLoading) {
+    return (
+      <div className="px-4 pt-2 border rounded h-full w-full">
+        {/* Header */}
+        <div className="flex gap-1 items-center justify-between">
+          {/* Note header left side */}
+          <div
+            className={cn(
+              "flex gap-1 items-center",
+              open ? "invisible pointer-events-none" : "visible",
             )}
+          >
+            <SidebarTrigger />
           </div>
-          <Profile />
+          <Button
+            variant={"outline"}
+            className="justify-between w-[40%] rounded-[10px]"
+            onClick={onOpenSearch}
+          >
+            <Search />
+            {"cmd+k"}
+          </Button>
+          {/* Note header right side */}
+          <div className="flex gap-1 items-center">
+            <div className="flex items-center gap-1">
+              {isSyncing ? (
+                <>
+                  <LoaderPinwheel className="text-gray-500 duration-400 animate-spin size-4" />
+                </>
+              ) : (
+                <>
+                  <Check className="text-accent-foreground size-4" />
+                </>
+              )}
+            </div>
+            <Profile />
+          </div>
+        </div>
+        <div className="relative flex flex-col gap-2 h-full overflow-hidden">
+          <div className="w-full animate-pulse duration-300" />
+          <h3 className="text-sm font-semibold text-gray-600">
+            Last updated on{" "}
+            <span className="italic text-sm animate-pulse duration-300" />
+          </h3>
+          <div className="h-[80%] rounded-lg overflow-y-auto animate-pulse duration-300" />
         </div>
       </div>
-      <div className="relative flex flex-col gap-2 h-full overflow-hidden">
-        <div className="w-full animate-pulse duration-300"/>
-        <h3 className="text-sm font-semibold text-gray-600">
-          Last updated on{" "}
-          <span className="italic text-sm animate-pulse duration-300" />
-        </h3>
-        <div className="h-[80%] rounded-lg overflow-y-auto animate-pulse duration-300" />
-      </div>
-    </div>
+    );
   }
 
   return (
-    <div
-      className="px-4 pt-2 border rounded h-full w-full"
-    >
+    <div className="px-4 pt-2 border rounded h-full w-full">
       <div className="flex gap-1 items-center justify-between">
         {/* Note header left side */}
-        <div className={cn("flex gap-1 items-center rounded-xl", open ? "invisible pointer-events-none" : "visible")}>
+        <div
+          className={cn(
+            "flex gap-1 items-center rounded-xl",
+            open ? "invisible pointer-events-none" : "visible",
+          )}
+        >
           <SidebarTrigger />
         </div>
         <Button
@@ -160,9 +178,11 @@ export function Note() {
         </div>
       </div>
       <div className="relative flex flex-col gap-2 h-full overflow-hidden">
-        <label htmlFor="noteTitle" className="sr-only">Note Title:</label>
+        <label htmlFor="noteTitle" className="sr-only">
+          Note Title:
+        </label>
         <input
-          key={`${params.noteId}-${note ? 'new' : 'old'}`}
+          key={`${params.noteId}-${note ? "new" : "old"}`}
           name="noteTitle"
           className="text-3xl my-2 w-full border-none underline font-extrabold focus:outline-none"
           type="text"
