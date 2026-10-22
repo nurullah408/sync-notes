@@ -1,6 +1,7 @@
-import { db } from "@/db/syncNotesDb";
+import { getNote } from "@/api/notes.api";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useQuery } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import type { MouseEvent } from "react";
 
@@ -11,46 +12,54 @@ interface IInternalLinkComponentProps {
 
 export function InternalLinkComponent({
   noteId,
-  nodeKey }: IInternalLinkComponentProps) {
+  nodeKey,
+}: IInternalLinkComponentProps) {
+  const { data, isLoading } = useQuery({
+    queryKey: QUERY_KEYS.notesDetail(noteId),
+    queryFn: () => getNote({ noteId }),
+  });
 
-  const note = useLiveQuery(async () => await db.notes.get(noteId));
-
-  if (!note) {
+  if (isLoading || !data) {
     return (
-      <div data-note-id={noteId} onClick={(e) => e.preventDefault()} className="internal-link animate-pulse duration-400 cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80">
+      <div
+        data-note-id={noteId}
+        onClick={(e) => e.preventDefault()}
+        className="internal-link animate-pulse duration-400 cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80"
+      >
         Loading
       </div>
-    )
+    );
   }
 
-  const title = note?.title;
+  const title = data?.data?.title;
 
-  const isDeleted = note?.isDeleted;
+  const isDeleted = data?.data?.isDeleted;
 
   const handleClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isDeleted) return;
     window.dispatchEvent(
-      new CustomEvent('internal-link:click', {
+      new CustomEvent("internal-link:click", {
         detail: { noteId, nodeKey },
-      })
+      }),
     );
-  }
+  };
 
   return (
     <a
       href={`/notes/${noteId}`}
       onClick={handleClick}
       data-note-id={noteId}
-      className={
-        cn("internal-link cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80", {
+      className={cn(
+        "internal-link cursor-pointer inline-flex items-center gap-1 font-medium text-primary underline hover:text-primary/80",
+        {
           "line-through": isDeleted,
-        })
-      }
+        },
+      )}
     >
       <FileText className="size-4" />
-      {title|| "Untitled"}
+      {title || "Untitled"}
     </a>
   );
 }

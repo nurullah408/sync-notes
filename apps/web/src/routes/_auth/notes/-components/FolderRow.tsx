@@ -1,12 +1,26 @@
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { db } from "@/db/syncNotesDb";
 import { cn } from "@/lib/utils";
 import type { FolderItem } from "@/types/util-types/FolderItem";
 import { Ellipsis, FolderClosed, FolderOpen, Trash } from "lucide-react";
-import { useEffect, useRef, useState, type ChangeEvent, type Dispatch, type KeyboardEvent, type MouseEvent, type SetStateAction } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type KeyboardEvent,
+  type MouseEvent,
+  type SetStateAction,
+} from "react";
+import { useSidebarMutations } from "../-hooks/useSidebarMutations";
 
 interface FolderRowProps {
   folder: FolderItem;
@@ -25,9 +39,10 @@ export function FolderRow({
   onToggle,
   onDelete,
 }: FolderRowProps) {
-
   const inputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(folder.name);
+
+  const { updateFolderMutation } = useSidebarMutations();
 
   const setIsEditing = (editing: boolean) => {
     if (editing) {
@@ -43,40 +58,38 @@ export function FolderRow({
           newSet.delete(folder.id);
         }
         return newSet;
-      })
+      });
     }
-  }
+  };
 
   const onDoubleClick = (event: MouseEvent) => {
     event.preventDefault();
     setIsEditing(true);
     inputRef.current?.focus();
-  }
+  };
 
   const onChange = async (event: ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
-    setName(event.currentTarget.value)
-  }
+    setName(event.currentTarget.value);
+  };
 
   const handleSave = async () => {
     if (name.trim() && name !== folder.name) {
-      await db.folders.update(folder.id, {
-        name: name.trim(),
-      })
+      await updateFolderMutation.mutateAsync({ id: folder.id, name });
     }
     setIsEditing(false);
-  }
+  };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === "Enter") {
       handleSave();
       return;
     }
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       setName(folder.name);
       setIsEditing(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (!editing) return;
@@ -93,7 +106,9 @@ export function FolderRow({
     >
       <SidebarMenuButton
         asChild
-        className={cn("p-0 overflow-hidden hover:bg-transparent hover:text-none")}
+        className={cn(
+          "p-0 overflow-hidden hover:bg-transparent hover:text-none",
+        )}
         onClick={onToggle}
       >
         <div
@@ -102,22 +117,23 @@ export function FolderRow({
           )}
           onDoubleClick={onDoubleClick}
         >
-          {isOpen ? <FolderOpen className="size-4" /> : <FolderClosed className="size-4" />}
-          {
-            editing
-              ? <Input
-                className="text-ellipsis"
-                ref={inputRef}
-                value={name}
-                onChange={onChange}
-                onBlur={handleSave}
-                onKeyDown={onKeyDown}
-              />
-              : <span className="text-ellipsis">
-                {" "}
-                {folder.name}
-              </span>
-          }
+          {isOpen ? (
+            <FolderOpen className="size-4" />
+          ) : (
+            <FolderClosed className="size-4" />
+          )}
+          {editing ? (
+            <Input
+              className="text-ellipsis"
+              ref={inputRef}
+              value={name}
+              onChange={onChange}
+              onBlur={handleSave}
+              onKeyDown={onKeyDown}
+            />
+          ) : (
+            <span className="text-ellipsis"> {folder.name}</span>
+          )}
         </div>
       </SidebarMenuButton>
       <DropdownMenu>

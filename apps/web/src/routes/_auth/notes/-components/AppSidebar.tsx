@@ -8,21 +8,19 @@ import {
 } from "@/components/ui/sidebar";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { FolderPlus, Plus } from "lucide-react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { cn } from "@/lib/utils.ts";
 import { useMemo, useState } from "react";
 import { buildFlatList } from "@/lib/sidebar-utils.ts";
 import type { FlatListItem } from "@/types/util-types/FlatListItem.ts";
 import type { NoteItem } from "@/types/util-types/NoteItem.ts";
 import { useGlobalStore } from "@/store/store.tsx";
-import { db } from "@/db/syncNotesDb";
-import type { Folder } from "@/types/entities/Folder";
-import type { Note } from "@/types/entities/Note";
-import { INITIAL_EDITOR_STATE } from "@/lib/constants";
 import { FolderRow } from "./FolderRow";
 import { NoteRow } from "./NoteRow";
 import { useQuery } from "@tanstack/react-query";
 import { getSidebar } from "@/api/sidebar.api";
+import { createNewNote } from "@/lib/factories/notes.factory";
+import { createNewFolder } from "@/lib/factories/folders.factory";
+import { useSidebarMutations } from "../-hooks/useSidebarMutations";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -33,32 +31,21 @@ export function AppSidebar() {
   const { data, isLoading } = useQuery({
     queryKey: ["sidebar"],
     queryFn: getSidebar,
+    staleTime: 1000 * 60 * 5,
   });
+
+  const {
+    createNoteMutation,
+    deleteNoteMutation,
+    createFolderMutation,
+    deleteFolderMutation,
+  } = useSidebarMutations();
 
   const [collapsedFolders, setCollapsedFolders] = useState<
     Record<string, boolean>
   >({});
 
   const [editingFolders, setEditingFolders] = useState<Set<string>>(new Set());
-
-  const saveNote = async (note: Partial<Note> & { id: string }) => {
-    await db.notes.update(note.id, {
-      ...note,
-    });
-  };
-
-  const createNote = async (note: Note) => {
-    await db.notes.add({ ...note });
-  };
-
-  const createFolder = async (folder: Folder) => {
-    await db.folders.add({ ...folder });
-    setEditingFolders((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(folder.id);
-      return newSet;
-    });
-  };
 
   const toggleFolder = (folderId: string) => {
     setCollapsedFolders((prev) => ({
@@ -68,64 +55,74 @@ export function AppSidebar() {
   };
 
   const onCreateNewNote = async () => {
-    const newNoteId = crypto.randomUUID();
-    const newNote: Note = {
-      id: newNoteId,
-      title: "Untitled",
-      content: INITIAL_EDITOR_STATE,
-      searchContent: "",
-      createdAt: new Date().toISOString(),
-      deletedAt: null,
-      isDeleted: false,
-      folderId: null,
-      updatedAt: new Date().toISOString(),
-    };
-    await createNote(newNote);
-    navigate({ to: `/notes/$noteId`, params: { noteId: newNoteId } });
+    const note = createNewNote();
+    await createNoteMutation.mutateAsync(note);
+    navigate({ to: `/notes/$noteId`, params: { noteId: note.id } });
   };
 
   const onCreateNewFolder = async () => {
-    const newFolderId = crypto.randomUUID();
-    const newFolder: Folder = {
-      id: newFolderId,
-      name: "Untitled",
-      color: "#ffff",
-      createdAt: new Date().toISOString(),
-      deletedAt: null,
-      isDeleted: false,
-      updatedAt: new Date().toISOString(),
-    };
-    await createFolder(newFolder);
+    const folder = createNewFolder();
+    await createFolderMutation.mutateAsync(folder);
+    setEditingFolders((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(folder.id);
+      return newSet;
+    });
   };
 
   const onDelete = async (itemType: "folder" | "note", itemId: string) => {
     if (!data) return;
     const { notes } = data.data;
-    if (itemType === "note") {
-      const active = location.pathname.includes(`/notes/${itemId}`);
-      if (active) {
-        let nextRoute = "/notes";
-        let nextParams = {};
 
+    let currentIndex: number | undefined;
+    let nextNoteId: string | undefined;
+
+    const active = location.pathname.includes(`/notes/${itemId}`);
+
+    if (itemType === "note") {
+      if (active) {
         if (notes && notes.length > 1) {
-          const currentIndex = notes.findIndex((n) => n.id === itemId);
-          const nextNote =
-            currentIndex === notes.length - 1
-              ? notes[currentIndex - 1]
-              : notes[currentIndex + 1];
-          if (nextNote) {
-            nextRoute = "/notes/$noteId";
-            nextParams = {
-              $noteId: nextNote,
-            };
+          currentIndex = notes.findIndex((n) => n.id === itemId);
+          if (currentIndex !== -1) {
+            nextNoteId =
+              currentIndex === notes.length - 1
+                ? notes[currentIndex - 1].id
+                : notes[currentIndex + 1].id;
           }
         }
-        navigate({ to: nextRoute, params: nextParams });
       }
-      await saveNote({ id: itemId, isDeleted: true });
+
+      await deleteNoteMutation.mutateAsync(itemId);
+
+      if (nextNoteId) {
+        await navigate({
+          to: "/notes/$noteId",
+          params: { noteId: nextNoteId },
+        });
+      } else {
+        await navigate({ to: "/notes" });
+      }
       return;
     } else {
-      return;
+      await deleteFolderMutation.mutateAsync(itemId);
+      let noteId = location.pathname.split("/").reverse()[0];
+      const inFolder = notes.find(
+        (n) => n.id === noteId && n.folderId === itemId,
+      );
+      if (inFolder) {
+        const nextNoteIndex = notes.findIndex(
+          (note) => note.folderId !== itemId,
+        );
+        if (nextNoteIndex === -1) {
+          await navigate({ to: "/notes" });
+        } else {
+          nextNoteId = notes[nextNoteIndex].id;
+          await navigate({
+            to: "/notes/$noteId",
+            params: { noteId: nextNoteId },
+          });
+        }
+      }
     }
   };
 
@@ -191,7 +188,7 @@ export function AppSidebar() {
                         "overflow-hidden mt-2 transition-[max-height,opacity] duration-300 ease-in-out",
                         collapsedFolders[item.id]
                           ? "max-h-0 opacity-0"
-                          : "max-h-[100px] opacity-100",
+                          : "max-h-25 opacity-100",
                       )}
                     >
                       {folderChildren.map((note: NoteItem) => (
