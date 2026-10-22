@@ -48,4 +48,12 @@ export class EdgeController {
   remove(@Param('id') id: string) {
     return this.edgeService.remove(id);
   }
+
+  @Get('/note/:noteId')
+  getEdgesOfNote(
+    @Param('noteId') noteId: string,
+    @GetUser() user: RequestUser,
+  ) {
+    return this.edgeService.getEdgesOfNote(noteId, user.id);
+  }
 }

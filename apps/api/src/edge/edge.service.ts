@@ -56,4 +56,14 @@ export class EdgeService {
       data: { isDeleted: true, deletedAt: new Date().toISOString() },
     });
   }
+
+  async getEdgesOfNote(noteId: string, userId: number) {
+    const edges = await this.prisma.edge.findMany({
+      where: {
+        userId,
+        sourceId: noteId,
+      },
+    });
+    return edges;
+  }
 }

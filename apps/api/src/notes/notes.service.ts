@@ -72,10 +72,14 @@ export class NotesService {
   }
 
   async remove(userId: number, id: string) {
-    const deleted = await this.prisma.note.delete({
+    const deleted = await this.prisma.note.update({
       where: {
         id,
         userId,
+      },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date().toISOString(),
       },
     });
 

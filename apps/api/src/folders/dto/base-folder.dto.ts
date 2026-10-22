@@ -28,7 +28,8 @@ export class BaseFolderDto {
   @IsBoolean()
   isDeleted!: boolean;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  deletedAt: Date;
+  deletedAt: Date | null;
 }
