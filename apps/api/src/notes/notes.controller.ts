@@ -13,7 +13,7 @@ import { NotesService } from './notes.service';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.auth-guard';
-import type { RequestUser } from 'src/auth/types/JwtPayload';
+import type { RequestUser } from '@/auth/types/JwtPayload';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { SyncChangesDto } from './dto/sync-changes.dto';
 import { SyncService } from './sync.service';

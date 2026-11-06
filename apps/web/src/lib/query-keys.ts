@@ -12,4 +12,10 @@ export const QUERY_KEYS = {
     [...QUERY_KEYS.foldersAll, { filters }] as const,
   foldersDetail: (id: string) =>
     [...QUERY_KEYS.foldersAll, "detail", id] as const,
+  // Sidebar Keys
+  sidebar: ["sidebar"] as const,
+  // Node Edges
+  nodeEdgesAll: ["nodeEdgesAll"] as const,
+  nodeEdgeOfNote: (noteId: string) =>
+    [...QUERY_KEYS.nodeEdgesAll, noteId] as const,
 };

@@ -15,7 +15,7 @@ import { SidebarModule } from './sidebar/sidebar.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env.local',
+      envFilePath: '.env',
     }),
     NotesModule,
     AuthModule,
@@ -34,4 +34,4 @@ import { SidebarModule } from './sidebar/sidebar.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

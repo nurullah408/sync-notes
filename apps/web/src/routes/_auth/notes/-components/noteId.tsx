@@ -17,6 +17,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { getNote, updateNote } from "@/api/notes.api";
 import { queryClient } from "@/lib/query-client";
+import type { ApiResponse } from "@/types/response/ApiResponse";
 
 export function Note() {
   const params = useParams({ from: "/_auth/notes/$noteId" });
@@ -34,11 +35,42 @@ export function Note() {
   });
 
   const { mutate } = useMutation({
+    mutationKey: ["notes", "update"],
     mutationFn: updateNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notesDetail(params.noteId),
+    scope: {
+      id: `note-${params.noteId}`,
+    },
+    onMutate: async (variables) => {
+      const queryKey = QUERY_KEYS.notesDetail(params.noteId);
+      // prevent an in-flight request
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousNote =
+        queryClient.getQueryData<ApiResponse<Note>>(queryKey);
+
+      queryClient.setQueryData<ApiResponse<Note>>(queryKey, (old) => {
+        if (!old) return old;
+        const { id: _id, ...patch } = variables;
+
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            ...patch,
+          },
+        };
       });
+      return { previousNote, queryKey };
+    },
+    onError: (_error, _variables, context) => {
+      // Roll back if the request fails.
+      if (context?.previousNote) {
+        queryClient.setQueryData(context.queryKey, context.previousNote);
+      }
+    },
+    onSuccess: (response, variables) => {
+      // Reconcile the cache with the server's authoritative response.
+      queryClient.setQueryData(QUERY_KEYS.notesDetail(variables.id), response);
     },
   });
 

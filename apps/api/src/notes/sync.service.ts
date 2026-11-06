@@ -1,7 +1,6 @@
 import { Prisma } from '../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { SyncChangesDto, ChangeRecordDto } from './dto/sync-changes.dto';
-import { NoteWhereUniqueInput } from 'generated/prisma/models';
 import { UpstreamResult } from '@/types';
 import { Folder, Prisma as PrismaClient } from '@prisma/client';
 import { CreateFolderDto } from '@/folders/dto/create-folder.dto';
@@ -12,6 +11,7 @@ import { BaseNoteDto } from './dto/base-note.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { BaseEdgeDto } from '@/edge/dto/create-edge.dto';
+import { NoteWhereUniqueInput } from '../../generated/prisma/models';
 
 @Injectable()
 export class SyncService {

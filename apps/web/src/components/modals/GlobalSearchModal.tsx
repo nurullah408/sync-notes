@@ -8,13 +8,11 @@ import {
 } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { BASE_URL } from "@/constants";
-import type { ApiResponse } from "@/types/response/ApiResponse";
 import type { SearchNoteResult } from "@/types/NoteSearchResult";
 import { useNavigate } from "@tanstack/react-router";
 import { SanitizedHTMLMarkup } from "../sanitized-html-markup";
 import { useDebouncedCallback } from "@/hooks/useDebounce";
+import { searchNotes } from "@/api/notes.api";
 
 interface GlobalSearchModalProps {
   onClose: () => void;
@@ -32,18 +30,11 @@ export function GlobalSearchModal({ onClose }: GlobalSearchModalProps) {
     debouncedSetSearch(event.currentTarget.value);
   }
 
-  const { data: results, isLoading } = useQuery<
-    ApiResponse<SearchNoteResult[]>
-  >({
+  const { data: results, isLoading } = useQuery({
     enabled: search.length > 0,
     queryFn: async () => {
-      const results = await apiClient(
-        `${BASE_URL}/notes/search?query=${encodeURIComponent(search)}`,
-        {
-          method: "GET",
-        },
-      );
-      return await results.json();
+      const notes = await searchNotes(search);
+      return notes;
     },
     queryKey: ["notes", "search", search],
   });
@@ -108,8 +99,7 @@ function SearchResult({
   onClose,
 }: SearchNoteResult & { onClose: () => void }) {
   const navigate = useNavigate();
-  const onClick =
-   async () => {
+  const onClick = async () => {
     onClose();
     await navigate({
       to: "/notes/$noteId",

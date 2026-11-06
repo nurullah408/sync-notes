@@ -1,12 +1,13 @@
-import { db } from "@/db/syncNotesDb";
+import { getSidebar } from "@/api/sidebar.api";
 import { InternalLinkOption } from "@/lib/lexical/classes/InternalLinkOption";
 import { $createInternalLinkNode } from "@/lib/lexical/nodes/InternalLinkNode";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
   useBasicTypeaheadTriggerMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useQuery } from "@tanstack/react-query";
 import {
   $createTextNode,
   $getNodeByKey,
@@ -16,6 +17,9 @@ import {
 import { FileText } from "lucide-react";
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNodeEdgeMutations } from "../../-hooks/useNodeEdgeMutations";
+import { createNewNodeEdge } from "@/lib/factories/nodeEdge.factory";
+import { getNodeEdgesOfNote } from "@/api/nodeEdge.api";
 
 export function InternalLinkPlugin({ nodeId = "" }: { nodeId: string }) {
   const [editor] = useLexicalComposerContext();
@@ -25,26 +29,34 @@ export function InternalLinkPlugin({ nodeId = "" }: { nodeId: string }) {
     minLength: 0,
   });
 
-  const allNotes = useLiveQuery(async () => {
-    return db.notes.filter((n) => !n.isDeleted && n.id !== nodeId).toArray();
-  }, [nodeId]);
+  const { data } = useQuery({
+    queryKey: QUERY_KEYS.sidebar,
+    queryFn: getSidebar,
+  });
+
+  const { data: nodeEdges } = useQuery({
+    queryKey: QUERY_KEYS.nodeEdgeOfNote(nodeId),
+    queryFn: async ({ queryKey }) => {
+      const data = await getNodeEdgesOfNote(queryKey[1]);
+      return data;
+    },
+    enabled: nodeId.length !== 0,
+  });
+
+  const edges = nodeEdges?.data ?? [];
+
+  const { createEdgeNodeMutation } = useNodeEdgeMutations();
+
+  const allNotes = data?.data.notes ?? [];
 
   const addEdge = async (currentNoteId: string, option: InternalLinkOption) => {
     const { noteId } = option;
-    const existing = await db.nodeEdges
-      .where("[sourceId+targetId]")
-      .equals([currentNoteId, noteId])
-      .first();
+    const existing = edges.find(
+      (edge) => edge.sourceId === currentNoteId && edge.targetId === noteId,
+    );
     if (existing) return;
-    await db.nodeEdges.add({
-      id: crypto.randomUUID(),
-      sourceId: currentNoteId,
-      targetId: noteId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-      isDeleted: false,
-    });
+    const newNodeEdge = createNewNodeEdge(currentNoteId, noteId);
+    await createEdgeNodeMutation.mutateAsync(newNodeEdge);
   };
 
   const options = useMemo(() => {

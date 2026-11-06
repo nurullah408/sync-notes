@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Header } from "@/components/header";
 import { FilePlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { db } from "@/db/syncNotesDb";
 import type { Note } from "@/types/entities/Note";
-import { INITIAL_EDITOR_STATE } from "@/lib/constants";
+import { useSidebarMutations } from "./-hooks/useSidebarMutations";
+import { createNewNote } from "@/lib/factories/notes.factory";
 
 export const Route = createFileRoute("/_auth/notes/")({
   component: Index,
@@ -13,26 +13,17 @@ export const Route = createFileRoute("/_auth/notes/")({
 function Index() {
   const navigate = Route.useNavigate();
 
+  const { createNoteMutation } = useSidebarMutations();
+
   const createNote = async (note: Note) => {
-    await db.notes.add({ ...note });
-  }
+    await createNoteMutation.mutateAsync(note);
+  };
 
   const onCreateNewNote = async () => {
-    const newNoteId = crypto.randomUUID();
-    const newNote: Note = {
-      id: newNoteId,
-      title: "Untitled",
-      content: INITIAL_EDITOR_STATE,
-      searchContent: "",
-      createdAt: new Date().toISOString(),
-      deletedAt: null,
-      isDeleted: false,
-      folderId: null,
-      updatedAt: new Date().toISOString(),
-    };
+    const newNote = createNewNote();
     await createNote(newNote);
-    navigate({ to: `/notes/$noteId`, params: { noteId: newNoteId } });
-  }
+    navigate({ to: `/notes/$noteId`, params: { noteId: newNote.id } });
+  };
 
   return (
     <div className="[view-transition-name:main-content] w-full h-full flex flex-col overflow-hidden bg-background">
