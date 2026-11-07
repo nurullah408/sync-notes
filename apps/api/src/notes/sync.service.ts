@@ -10,7 +10,6 @@ import { BaseFolderDto } from '@/folders/dto/base-folder.dto';
 import { BaseNoteDto } from './dto/base-note.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
-import { BaseEdgeDto } from '@/edge/dto/create-edge.dto';
 import { NoteWhereUniqueInput } from '../../generated/prisma/models';
 
 @Injectable()
@@ -149,25 +148,6 @@ export class SyncService {
               userId,
               change,
               noteDto,
-              serverTime,
-            );
-          } else if (change.changeEntityType === 'edge') {
-            let edgeDto: BaseEdgeDto | null = null;
-            switch (change.changeOperation) {
-              case 'create': {
-                edgeDto = plainToInstance(BaseEdgeDto, payload);
-                break;
-              }
-              case 'update': {
-                edgeDto = plainToInstance(BaseEdgeDto, payload);
-                break;
-              }
-            }
-            await this.applyEdgeChangeRecord(
-              tx,
-              userId,
-              change,
-              edgeDto,
               serverTime,
             );
           }
@@ -327,61 +307,6 @@ export class SyncService {
         await tx.folder.update({
           where: { id: change.entityId },
           data: { isDeleted: true, deletedAt: serverTime },
-        });
-        break;
-      }
-    }
-  }
-
-  private async applyEdgeChangeRecord(
-    tx: PrismaClient.TransactionClient,
-    userId: number,
-    change: ChangeRecordDto,
-    payload: BaseEdgeDto | null,
-    serverTime: Date,
-  ) {
-    switch (change.changeOperation) {
-      case 'create': {
-        await tx.edge.create({
-          data: {
-            ...payload,
-            id: change.entityId,
-            userId,
-          } as PrismaClient.EdgeUncheckedCreateInput,
-        });
-        break;
-      }
-      case 'update': {
-        const existing = await tx.edge.findUnique({
-          where: { id: change.entityId },
-          select: { id: true, userId: true },
-        });
-
-        if (!existing || existing.userId !== userId) return;
-
-        await tx.edge.update({
-          where: { id: change.entityId },
-          data: {
-            ...payload,
-            userId,
-          },
-        });
-        break;
-      }
-      case 'delete': {
-        const existing = await tx.edge.findUnique({
-          where: { id: change.entityId },
-          select: { id: true, userId: true },
-        });
-        if (!existing || existing.userId !== userId) return;
-
-        await tx.edge.update({
-          where: { id: change.entityId },
-          data: {
-            ...payload,
-            isDeleted: true,
-            deletedAt: serverTime,
-          },
         });
         break;
       }

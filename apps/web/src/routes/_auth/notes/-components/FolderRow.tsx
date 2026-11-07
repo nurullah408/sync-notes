@@ -101,7 +101,7 @@ export function FolderRow({
         <SidebarMenuItem
             key={folder.id}
             className={cn(
-                "flex items-center w-full border rounded-[12px] relative overflow-hidden",
+                "flex items-center border relative rounded-[12px] overflow-hidden px-2",
             )}
         >
             <SidebarMenuButton
@@ -113,7 +113,7 @@ export function FolderRow({
             >
                 <div
                     className={cn(
-                        "flex-6 py-0.5 pl-2 flex items-center gap-2 text-center rounded-l-[30px] overflow-hidden",
+                        "flex-6 flex items-center gap-2 text-center rounded-l-[30px] overflow-hidden",
                     )}
                     onDoubleClick={onDoubleClick}
                 >
@@ -139,7 +139,7 @@ export function FolderRow({
             <DropdownMenu>
                 <DropdownMenuTrigger
                     className={cn(
-                        "flex-1 rounded-r-[30px] pr-0 hover:bg-transparent",
+                        "flex-0 rounded-md p-0.5 hover:bg-brand-500 hover:text-white",
                     )}
                 >
                     <Ellipsis className={cn("h-full size-4")} />

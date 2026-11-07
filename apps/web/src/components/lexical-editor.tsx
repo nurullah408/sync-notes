@@ -24,9 +24,6 @@ import {
 import type { EditorState } from "lexical";
 import { EDITOR_THEME, INITIALIZE_EDITOR_TAG } from "@/lib/constants";
 import { useRef, type MouseEvent } from "react";
-import { InternalLinkNode } from "@/lib/lexical/nodes/InternalLinkNode";
-import { InternalLinkPlugin } from "@/routes/_auth/notes/-components/lexical-plugins/InternalLinkPlugin";
-import { InternalLinkSyncPlugin } from "@/routes/_auth/notes/-components/lexical-plugins/InternalLinkSyncPlugin";
 import { FloatingToolbarPlugin } from "@/lib/lexical/plugins/FloatingBarPlugin";
 import { InitializePlugin } from "@/lib/lexical/plugins/InitializePlugin";
 import { SlashMenuPlugin } from "@/lib/lexical/plugins/SlashMenuPlugin";
@@ -69,7 +66,6 @@ export function Editor({
             ListItemNode,
             CodeNode,
             CodeHighlightNode,
-            InternalLinkNode,
         ],
     };
 
@@ -133,8 +129,6 @@ export function Editor({
                 transformers={CUSTOM_MARKDOWN_TRANSFORMERS}
             />
             <SlashMenuPlugin />
-            <InternalLinkPlugin nodeId={currentNodeId} />
-            <InternalLinkSyncPlugin noteId={currentNodeId} />
             {children}
         </LexicalComposer>
     );
