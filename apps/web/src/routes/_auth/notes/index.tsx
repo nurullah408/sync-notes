@@ -5,59 +5,62 @@ import { Button } from "@/components/ui/button";
 import type { Note } from "@/types/entities/Note";
 import { useSidebarMutations } from "./-hooks/useSidebarMutations";
 import { createNewNote } from "@/lib/factories/notes.factory";
+import Profile from "@/components/Profile";
 
 export const Route = createFileRoute("/_auth/notes/")({
-  component: Index,
+    component: Index,
 });
 
 function Index() {
-  const navigate = Route.useNavigate();
+    const navigate = Route.useNavigate();
 
-  const { createNoteMutation } = useSidebarMutations();
+    const { createNoteMutation } = useSidebarMutations();
 
-  const createNote = async (note: Note) => {
-    await createNoteMutation.mutateAsync(note);
-  };
+    const createNote = async (note: Note) => {
+        await createNoteMutation.mutateAsync(note);
+    };
 
-  const onCreateNewNote = async () => {
-    const newNote = createNewNote();
-    await createNote(newNote);
-    navigate({ to: `/notes/$noteId`, params: { noteId: newNote.id } });
-  };
+    const onCreateNewNote = async () => {
+        const newNote = createNewNote();
+        await createNote(newNote);
+        navigate({ to: `/notes/$noteId`, params: { noteId: newNote.id } });
+    };
 
-  return (
-    <div className="[view-transition-name:main-content] w-full h-full flex flex-col overflow-hidden bg-background">
-      {/* Dynamic Header Toolbar Row */}
-      <Header className="justify-between border-b px-6 shrink-0 h-16 bg-white dark:bg-zinc-900">
-        <div>
-          <h4 className="text-sm font-bold text-muted-foreground">
-            Sync Notes
-          </h4>
+    return (
+        <div className="[view-transition-name:main-content] w-full h-full flex flex-col overflow-hidden bg-background">
+            {/* Dynamic Header Toolbar Row */}
+            <Header className="justify-between border-b px-6 shrink-0 h-16 bg-white dark:bg-zinc-900">
+                <div>
+                    <h4 className="text-sm font-bold text-muted-foreground">
+                        Sync Notes
+                    </h4>
+                </div>
+                <div>
+                    <Profile />
+                </div>
+            </Header>
+
+            {/* Center Empty State Canvas Layout */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/30 dark:bg-zinc-950/20">
+                <div className="p-4 bg-white dark:bg-zinc-900 shadow-sm border rounded-2xl text-muted-foreground/60 mb-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <FilePlus className="size-8" />
+                </div>
+
+                <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-zinc-50">
+                    No Note Selected
+                </h3>
+                <p className="text-muted-foreground text-sm max-w-sm mt-1.5 mb-6 leading-relaxed">
+                    Select a document directly from the sidebar or create a note
+                    right now.
+                </p>
+
+                <Button
+                    onClick={onCreateNewNote}
+                    className="gap-2 rounded-xl px-5 h-11 shadow-sm font-medium"
+                >
+                    <Plus className="size-4" /> Create Fresh Note
+                </Button>
+            </div>
         </div>
-      </Header>
-
-      {/* Center Empty State Canvas Layout */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/30 dark:bg-zinc-950/20">
-        <div className="p-4 bg-white dark:bg-zinc-900 shadow-sm border rounded-2xl text-muted-foreground/60 mb-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <FilePlus className="size-8" />
-        </div>
-
-        <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-zinc-50">
-          No Note Selected
-        </h3>
-        <p className="text-muted-foreground text-sm max-w-sm mt-1.5 mb-6 leading-relaxed">
-          Select a document card directly from the sidebar list parameters
-          navigation panel, or initialize a fresh editor canvas workspace right
-          now.
-        </p>
-
-        <Button
-          onClick={onCreateNewNote}
-          className="gap-2 rounded-xl px-5 h-11 shadow-sm font-medium"
-        >
-          <Plus className="size-4" /> Create Fresh Note
-        </Button>
-      </div>
-    </div>
-  );
+    );
 }

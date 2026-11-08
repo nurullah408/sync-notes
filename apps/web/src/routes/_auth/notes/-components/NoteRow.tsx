@@ -26,7 +26,7 @@ export function NoteRow({ note, onDelete, onMoveNote }: NoteRowProps) {
         <SidebarMenuItem
             key={note.id}
             className={cn(
-                "flex items-center border rounded-[12px] relative overflow-hidden pl-2",
+                "flex items-center border relative rounded-[12px] overflow-hidden px-2",
                 active ? "bg-primary text-white" : "",
             )}
             style={{
@@ -59,7 +59,7 @@ export function NoteRow({ note, onDelete, onMoveNote }: NoteRowProps) {
             <DropdownMenu>
                 <DropdownMenuTrigger
                     className={cn(
-                        "flex-1 rounded-r-[30px] pr-0 hover:bg-transparent",
+                        "flex-0 rounded-md p-0.5 hover:bg-brand-500",
                         active ? "bg-primary text-white" : "",
                     )}
                 >

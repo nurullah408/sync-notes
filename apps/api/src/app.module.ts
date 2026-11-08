@@ -9,7 +9,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformResponseInterceptor } from './interceptors/transformResponse.interceptor';
 import { FoldersModule } from './folders/folders.module';
 import { MailModule } from './mail/mail.module';
-import { EdgeModule } from './edge/edge.module';
 import { SidebarModule } from './sidebar/sidebar.module';
 
 @Module({
@@ -21,7 +20,6 @@ import { SidebarModule } from './sidebar/sidebar.module';
     AuthModule,
     FoldersModule,
     MailModule,
-    EdgeModule,
     SidebarModule,
   ],
   controllers: [AppController],
@@ -34,4 +32,4 @@ import { SidebarModule } from './sidebar/sidebar.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
