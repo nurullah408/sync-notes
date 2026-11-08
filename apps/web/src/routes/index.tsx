@@ -49,16 +49,9 @@ function RouteComponent() {
             <section className="h-screen w-screen grid lg:flex p-4">
                 {/* Left side content */}
                 <article className="z-10 flex flex-col gap-6 max-w-2xl">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-500 text-blue-600 text-sm font-medium w-fit">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                        </span>
-                        v1.0 is now live
-                    </div>
                     <h1 className="text-6xl lg:text-8xl font-black tracking-tight text-slate-900 leading-[0.9]">
                         Your last{" "}
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+                        <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-indigo-500">
                             note taking
                         </span>{" "}
                         app.
