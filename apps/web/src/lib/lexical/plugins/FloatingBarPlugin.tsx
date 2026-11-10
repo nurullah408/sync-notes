@@ -123,7 +123,7 @@ export function FloatingToolbarPlugin() {
             aria-label="Toolbar"
             ref={ref}
             onMouseDown={(e) => e.preventDefault()}
-            className="flex items-center gap-0.5 p-0.5 rounded-md fixed z-1000 bg-accent-foreground border"
+            className="flex items-center gap-0.5 p-0.5 rounded-md fixed z-1000 bg-primary-foreground border"
             style={{
                 transform: `translateX(-50%)`,
             }}

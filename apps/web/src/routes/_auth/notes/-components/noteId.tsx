@@ -178,6 +178,7 @@ export function Note() {
 
     return (
         <div className="px-4 pt-2 border rounded h-full w-full">
+            <title>{`${note?.title || "Untitled"} | Sync Notes`}</title>
             <div className="flex gap-1 items-center justify-between">
                 {/* Note header left side */}
                 <div
