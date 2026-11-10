@@ -23,10 +23,11 @@ import {
 
 import type { EditorState } from "lexical";
 import { EDITOR_THEME, INITIALIZE_EDITOR_TAG } from "@/lib/constants";
-import { useRef, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import { FloatingToolbarPlugin } from "@/lib/lexical/plugins/FloatingBarPlugin";
 import { InitializePlugin } from "@/lib/lexical/plugins/InitializePlugin";
 import { SlashMenuPlugin } from "@/lib/lexical/plugins/SlashMenuPlugin";
+import { DraggableBlocksPlugin } from "@/lib/lexical/plugins/DraggableBlocksPlugin";
 
 interface EditorProps {
     currentNodeId: string;
@@ -77,6 +78,10 @@ export function Editor({
         QUOTE,
     ];
 
+    const [anchorElement, setAnchorElement] = useState<HTMLDivElement | null>(
+        null,
+    );
+
     const contentEditableRef = useRef<HTMLDivElement>(null);
 
     const handleOnClick = (e: MouseEvent) => {
@@ -88,48 +93,53 @@ export function Editor({
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
-            <RichTextPlugin
-                contentEditable={
-                    <ContentEditable
-                        ref={contentEditableRef}
-                        className={className}
-                    />
-                }
-                placeholder={
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={handleOnClick}
-                        className={placeholderClassName}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                contentEditableRef.current?.focus();
-                            }
-                        }}
-                    >
-                        Enter some text...
-                    </div>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-            />
-            <FloatingToolbarPlugin />
-            <ListPlugin />
-            <CheckListPlugin />
-            <InitializePlugin json={initialContent} />
-            <OnChangePlugin
-                ignoreSelectionChange
-                onChange={(editorState, _, tags) => {
-                    if (tags.has(INITIALIZE_EDITOR_TAG)) return;
-                    onChange(editorState);
-                }}
-            />
-            <HistoryPlugin />
-            <MarkdownShortcutPlugin
-                transformers={CUSTOM_MARKDOWN_TRANSFORMERS}
-            />
-            <SlashMenuPlugin />
-            {children}
+            <div ref={setAnchorElement} className="relative">
+                <RichTextPlugin
+                    contentEditable={
+                        <ContentEditable
+                            ref={contentEditableRef}
+                            className={className}
+                        />
+                    }
+                    placeholder={
+                        <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={handleOnClick}
+                            className={placeholderClassName}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    contentEditableRef.current?.focus();
+                                }
+                            }}
+                        >
+                            Enter some text...
+                        </div>
+                    }
+                    ErrorBoundary={LexicalErrorBoundary}
+                />
+                <FloatingToolbarPlugin />
+                <ListPlugin />
+                <CheckListPlugin />
+                <InitializePlugin json={initialContent} />
+                <OnChangePlugin
+                    ignoreSelectionChange
+                    onChange={(editorState, _, tags) => {
+                        if (tags.has(INITIALIZE_EDITOR_TAG)) return;
+                        onChange(editorState);
+                    }}
+                />
+                <HistoryPlugin />
+                <MarkdownShortcutPlugin
+                    transformers={CUSTOM_MARKDOWN_TRANSFORMERS}
+                />
+                <SlashMenuPlugin />
+                {anchorElement && (
+                    <DraggableBlocksPlugin anchorElement={anchorElement} />
+                )}
+                {children}
+            </div>
         </LexicalComposer>
     );
 }

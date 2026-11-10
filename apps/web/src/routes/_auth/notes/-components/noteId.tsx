@@ -234,10 +234,10 @@ export function Note() {
                             : ""}
                     </span>
                 </h3>
-                <div className="h-[80%] rounded-lg overflow-y-auto">
+                <div className="h-[80%] rounded-lg overflow-y-auto overflow-x-hidden">
                     <Editor
                         currentNodeId={params.noteId}
-                        className="px-1 w-full focus:outline-none"
+                        className="px-6 w-full focus:outline-none overflow-hidden"
                         placeholderClassName="absolute top-22 left-1 text-gray-400"
                         initialContent={content}
                         onChange={onEditorChange}
