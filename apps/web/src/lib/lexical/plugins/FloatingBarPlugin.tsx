@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { DEFAULT_FORMATS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLayoutEffect } from "@tanstack/react-router";
@@ -6,28 +7,48 @@ import {
     $getSelection,
     $isRangeSelection,
     FORMAT_TEXT_COMMAND,
-    type TextFormatType,
     type UpdateListener,
 } from "lexical";
-import { Bold, Italic, Underline } from "lucide-react";
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import {
+    ALargeSmall,
+    Bold,
+    CaseLower,
+    CaseUpper,
+    Code,
+    Highlighter,
+    Italic,
+    Strikethrough,
+    Subscript,
+    Superscript,
+    Underline,
+} from "lucide-react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
+import { readFormats, sameFormats } from "../utils";
 
-function useHasTextFormat(format: TextFormatType): boolean {
+function useGetTextFormats() {
     const [editor] = useLexicalComposerContext();
 
-    const subscribe = useCallback(
-        (onChange: UpdateListener) => editor.registerUpdateListener(onChange),
-        [editor],
-    );
+    const [formats, setFormats] = useState(DEFAULT_FORMATS);
 
-    const getSnapshot = () =>
-        editor.getEditorState().read(() => {
-            const selection = $getSelection();
-            return $isRangeSelection(selection) && selection.hasFormat(format);
+    useEffect(() => {
+        const initial = readFormats(editor.getEditorState());
+        setFormats((prev) => (sameFormats(prev, initial) ? prev : initial));
+        return editor.registerUpdateListener(({ editorState }) => {
+            const nextFormats = readFormats(editorState);
+            setFormats((prev) =>
+                sameFormats(prev, nextFormats) ? prev : nextFormats,
+            );
         });
+    }, [editor]);
 
-    return useSyncExternalStore(subscribe, getSnapshot, () => false);
+    return formats;
 }
 
 function useHasTextSelection(): boolean {
@@ -55,11 +76,7 @@ export function FloatingToolbarPlugin() {
 
     const visible = useHasTextSelection();
 
-    const isBold = useHasTextFormat("bold");
-
-    const isItalic = useHasTextFormat("italic");
-
-    const isUnderline = useHasTextFormat("underline");
+    const formats = useGetTextFormats();
 
     const ref = useRef<HTMLDivElement>(null);
 
@@ -106,13 +123,13 @@ export function FloatingToolbarPlugin() {
             aria-label="Toolbar"
             ref={ref}
             onMouseDown={(e) => e.preventDefault()}
-            className="flex items-center gap-0.5 p-0.5 rounded-md fixed z-1000 bg-accent-foreground border"
+            className="flex items-center gap-0.5 p-0.5 rounded-md fixed z-1000 bg-primary-foreground border"
             style={{
                 transform: `translateX(-50%)`,
             }}
         >
             <Button
-                className={buttonClass(isBold)}
+                className={buttonClass(formats.bold)}
                 size="icon-sm"
                 onClick={() => {
                     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
@@ -121,7 +138,7 @@ export function FloatingToolbarPlugin() {
                 <Bold />
             </Button>
             <Button
-                className={buttonClass(isItalic)}
+                className={buttonClass(formats.italic)}
                 size="icon-sm"
                 onClick={() => {
                     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
@@ -130,13 +147,88 @@ export function FloatingToolbarPlugin() {
                 <Italic />
             </Button>
             <Button
-                className={buttonClass(isUnderline)}
+                className={buttonClass(formats.underline)}
                 size="icon-sm"
                 onClick={() => {
                     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
                 }}
             >
                 <Underline />
+            </Button>
+            <Button
+                className={buttonClass(formats.code)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
+                }}
+            >
+                <Code />
+            </Button>
+            <Button
+                className={buttonClass(formats.strikethrough)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(
+                        FORMAT_TEXT_COMMAND,
+                        "strikethrough",
+                    );
+                }}
+            >
+                <Strikethrough />
+            </Button>
+            <Button
+                className={buttonClass(formats.capitalize)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "capitalize");
+                }}
+            >
+                <ALargeSmall />
+            </Button>
+            <Button
+                className={buttonClass(formats.lowercase)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "lowercase");
+                }}
+            >
+                <CaseLower />
+            </Button>
+            <Button
+                className={buttonClass(formats.uppercase)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "uppercase");
+                }}
+            >
+                <CaseUpper />
+            </Button>
+            <Button
+                className={buttonClass(formats.highlight)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "highlight");
+                }}
+            >
+                <Highlighter />
+            </Button>
+            <Button
+                className={buttonClass(formats.superscript)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
+                }}
+            >
+                <Superscript />
+            </Button>
+            <Button
+                className={buttonClass(formats.subscript)}
+                size="icon-sm"
+                onClick={() => {
+                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
+                }}
+            >
+                <Subscript />
             </Button>
         </div>,
         document.body,
