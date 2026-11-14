@@ -15,26 +15,14 @@ import {
     Trash2,
     Type,
 } from "lucide-react";
-import {
-    useEffect,
-    useRef,
-    useState,
-    type MouseEvent,
-    type ReactNode,
-    type RefObject,
-} from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { findBlockAt, transformBlock, type BlockType } from "../utils";
+import { Menu, MenuItem, type MenuState } from "@/components/editor-menu";
 
 type DraggableBlockPluginProps = {
     anchorElement: HTMLElement;
 };
-
-type MenuState = {
-    x: number;
-    y: number;
-    blockEl: HTMLElement;
-} | null;
 
 export function DraggableBlocksPlugin({
     anchorElement,
@@ -126,7 +114,7 @@ export function DraggableBlocksPlugin({
                             "text-muted-foreground opacity-0",
                             // Animate
                             "transition-[opacity,transform,background-color,color] duration-(--duration-fast) ease-(--ease-standard) hover:bg-accent hover:text-accent-foreground",
-                            "active:scale-95 active:cursor-grabbing",
+                            "active:cursor-grabbing",
                         )}
                     >
                         <GripVertical className="size-4 transition-transform duration-(--duration-fast) ease-(--ease-out-soft) group-hover:-translate-y-px" />
@@ -218,57 +206,5 @@ export function DraggableBlocksPlugin({
             )}
         </>,
         anchorElement,
-    );
-}
-
-function MenuItem({
-    icon,
-    children,
-    onSelect,
-    destructive,
-}: {
-    icon: ReactNode;
-    children: ReactNode;
-    onSelect: () => void;
-    destructive?: boolean;
-}) {
-    return (
-        <button
-            type="button"
-            role="menuitem"
-            onClick={onSelect}
-            className={cn(
-                "flex gap-2 items-center w-full rounded-md px-2 py-1 outline-none",
-                "transition-colors duration-(--duration-fast)",
-                destructive
-                    ? "text-destructive hover:bg-destructive/10"
-                    : "hover:bg-accent hover:text-accent-foreground",
-            )}
-        >
-            {icon}
-            {children}
-        </button>
-    );
-}
-
-type MenuProps = {
-    ref: RefObject<HTMLDivElement | null>;
-    menu: MenuState;
-    children: ReactNode;
-};
-
-function Menu({ ref, menu, children }: MenuProps) {
-    return createPortal(
-        <div
-            ref={ref}
-            role="menu"
-            style={{ top: menu?.y, left: menu?.x }}
-            className={cn(
-                "fixed z-(--z-dropdown) min-w-40 rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 duration-(--duration-fast)",
-            )}
-        >
-            {children}
-        </div>,
-        document.body,
     );
 }
