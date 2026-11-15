@@ -1,53 +1,43 @@
-# Stage 1: Install dependencies and generate Prisma client
-# Used by docker-compose.dev.yml as the dev target
+
+# Stage 1: Install workspace dependencies
 FROM node:22-alpine AS deps
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 WORKDIR /usr/src/app
 
-# Copy dependency manifests and workspace config (needed by pnpm)
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json nest-cli.json ./
+# Copy the monorepo
+COPY . .
 
+# Install dependencies for the entire workspace
 RUN pnpm install --frozen-lockfile
 
-# Copy Prisma schema & config, then generate the client
-COPY prisma.config.ts ./
-COPY prisma/schema.prisma ./prisma/schema.prisma
-RUN npx prisma generate
-
-# ------------------------------------------------------------------- #
-# Stage 2: Build the application
+# Stage 2: Build
 FROM deps AS builder
 
-COPY . .
-RUN pnpm run build
+# Generate Prisma Client
+RUN pnpm --filter @sync-notes/api exec prisma generate
 
-# Prisma is a regular dependency now, so it survives --prod pruning
-RUN pnpm prune --prod
+# Build shared package if it has a build script
+# RUN pnpm --filter @sync-notes/lexical build
 
-# ------------------------------------------------------------------- #
-# Stage 3: Production runner
+# Build NestJS API
+RUN pnpm --filter @sync-notes/api build
+
+# Stage 3: Production
 FROM node:22-alpine AS runner
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable
 
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
-# Copy only what's needed at runtime
-COPY --from=builder /usr/src/app/package.json ./
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/generated ./generated
-COPY --from=builder /usr/src/app/prisma ./prisma
-COPY --from=builder /usr/src/app/prisma.config.ts ./
+# Copy workspace dependencies and build outputs
+COPY --from=builder /usr/src/app ./
 
-COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh
+WORKDIR /usr/src/app/apps/api
 
 EXPOSE 3000
 
-ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/main.js"]

@@ -5,8 +5,10 @@
     "private": true,
     "main": "index.js",
     "scripts": {
-        "dev:web": "pnpm --filter @sync-notes/web dev",
-        "dev:api": "pnpm --filter @sync-notes/api start:dev",
+        "dev:web:local": "pnpm --filter @sync-notes/web dev",
+        "dev:web:prod": "pnpm --filter @sync-notes/web dev:prod",
+        "dev:api:local": "pnpm --filter @sync-notes/api start:dev:local",
+        "dev:api:prod": "pnpm --filter @sync-notes/api start:dev:prod",
         "build:api": "pnpm --filter @sync-notes/api build",
         "build:web": "pnpm --filter @sync-notes/web build",
         "build": "pnpm -r build",
