@@ -14,7 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '../constants';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { MailService } from '@/mail/mail.service';
 import crypto from 'crypto';
 
