@@ -2,6 +2,8 @@
 # Stage 1: Install workspace dependencies
 FROM node:22-alpine AS deps
 
+ENV CI=true
+
 RUN corepack enable
 
 WORKDIR /usr/src/app
