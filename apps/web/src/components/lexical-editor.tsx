@@ -30,7 +30,6 @@ import { SlashMenuPlugin } from "@/lib/lexical/plugins/SlashMenuPlugin";
 import { DraggableBlocksPlugin } from "@/lib/lexical/plugins/DraggableBlocksPlugin";
 
 interface EditorProps {
-    currentNodeId: string;
     initialContent: string;
     onChange: (editorState: EditorState) => void;
     namespace?: string;
@@ -47,7 +46,6 @@ function onError(error: Error): void {
 }
 
 export function Editor({
-    currentNodeId,
     initialContent,
     namespace,
     onChange,
