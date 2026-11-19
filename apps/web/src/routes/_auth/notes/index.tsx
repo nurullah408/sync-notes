@@ -6,6 +6,8 @@ import type { Note } from "@/types/entities/Note";
 import { useSidebarMutations } from "./-hooks/useSidebarMutations";
 import { createNewNote } from "@/lib/factories/notes.factory";
 import Profile from "@/components/Profile";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_auth/notes/")({
     component: Index,
@@ -15,6 +17,8 @@ function Index() {
     const navigate = Route.useNavigate();
 
     const { createNoteMutation } = useSidebarMutations();
+
+    const { open, isMobile } = useSidebar();
 
     const createNote = async (note: Note) => {
         await createNoteMutation.mutateAsync(note);
@@ -30,7 +34,17 @@ function Index() {
         <div className="[view-transition-name:main-content] w-full h-full flex flex-col overflow-hidden bg-background">
             {/* Dynamic Header Toolbar Row */}
             <Header className="justify-between border-b px-6 shrink-0 h-16 bg-white dark:bg-zinc-900">
-                <div>
+                <div className="flex items-center gap-1">
+                    <div
+                        className={cn(
+                            "flex gap-1 items-center rounded-xl",
+                            !isMobile &&
+                                open &&
+                                "invisible pointer-events-none",
+                        )}
+                    >
+                        <SidebarTrigger />
+                    </div>
                     <h4 className="text-sm font-bold text-muted-foreground">
                         Sync Notes
                     </h4>
