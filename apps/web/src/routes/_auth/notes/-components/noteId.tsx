@@ -12,11 +12,10 @@ import { type ChangeEvent } from "react";
 import { useSyncContext } from "@/context/SyncContext";
 import { useGlobalStore } from "@/store/store.tsx";
 import Profile from "@/components/Profile";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { getNote, updateNote } from "@/api/notes.api";
-import { queryClient } from "@/lib/query-client";
-import type { ApiResponse } from "@/types/response/ApiResponse";
+import { getNote } from "@/api/notes.api";
+import { useNoteMutations } from "../-hooks/useNoteMutation";
 
 export function Note() {
     const params = useParams({ from: "/_auth/notes/$noteId" });
@@ -33,56 +32,12 @@ export function Note() {
         staleTime: 5 * 60 * 1000,
     });
 
-    const { mutate } = useMutation({
-        mutationKey: ["notes", "update"],
-        mutationFn: updateNote,
-        scope: {
-            id: `note-${params.noteId}`,
-        },
-        onMutate: async (variables) => {
-            const queryKey = QUERY_KEYS.notesDetail(params.noteId);
-            // prevent an in-flight request
-            await queryClient.cancelQueries({ queryKey });
-
-            const previousNote =
-                queryClient.getQueryData<ApiResponse<Note>>(queryKey);
-
-            queryClient.setQueryData<ApiResponse<Note>>(queryKey, (old) => {
-                if (!old) return old;
-                const { id: _id, ...patch } = variables;
-
-                return {
-                    ...old,
-                    data: {
-                        ...old.data,
-                        ...patch,
-                    },
-                };
-            });
-            return { previousNote, queryKey };
-        },
-        onError: (_error, _variables, context) => {
-            // Roll back if the request fails.
-            if (context?.previousNote) {
-                queryClient.setQueryData(
-                    context.queryKey,
-                    context.previousNote,
-                );
-            }
-        },
-        onSuccess: (response, variables) => {
-            // Reconcile the cache with the server's authoritative response.
-            queryClient.setQueryData(
-                QUERY_KEYS.notesDetail(variables.id),
-                response,
-            );
-        },
-    });
+    const { updateNoteMutation } = useNoteMutations({ noteId: params.noteId });
 
     const note = data?.data;
 
     const updateNoteTitle = useDebouncedCallback(async (title: string) => {
-        mutate({
+        updateNoteMutation.mutate({
             id: params.noteId,
             title,
             updatedAt: new Date().toISOString(),
@@ -99,7 +54,7 @@ export function Note() {
                 return { json, textContent: root.getTextContent() };
             });
 
-            mutate({
+            updateNoteMutation.mutate({
                 id: params.noteId,
                 content: json,
                 searchContent: textContent,
@@ -115,6 +70,10 @@ export function Note() {
 
     function onChangeTitle(event: ChangeEvent<HTMLInputElement>) {
         const { value } = event.currentTarget;
+        if (value === "" || value === undefined) {
+            updateNoteTitle("Untitled");
+            return;
+        }
         updateNoteTitle(value);
     }
 
@@ -179,7 +138,7 @@ export function Note() {
     return (
         <div className="px-4 pt-2 border rounded h-full w-full">
             <title>{`${note?.title || "Untitled"} | Sync Notes`}</title>
-            <div className="flex gap-1 items-center justify-between">
+            <div className="flex gap-1 items-center justify-between mt-2">
                 {/* Note header left side */}
                 <div
                     className={cn(
@@ -220,13 +179,13 @@ export function Note() {
                 <input
                     key={`${params.noteId}-${note ? "new" : "old"}`}
                     name="noteTitle"
-                    className="text-3xl my-2 w-full border-none underline font-extrabold focus:outline-none"
+                    className="px-8 text-3xl my-2 w-full border-none underline font-extrabold focus:outline-none"
                     type="text"
                     placeholder="Untitled"
                     defaultValue={title}
                     onChange={onChangeTitle}
                 />
-                <h3 className="text-sm font-semibold text-gray-600">
+                <h3 className="px-8 text-sm font-semibold text-gray-600">
                     Last updated on{" "}
                     <span className="italic text-sm">
                         {note?.updatedAt
@@ -237,7 +196,7 @@ export function Note() {
                 <div className="h-[80%] rounded-lg overflow-y-auto overflow-x-hidden">
                     <Editor
                         className="px-8 w-full focus:outline-none overflow-hidden"
-                        placeholderClassName="absolute top-22 left-1 text-gray-400"
+                        placeholderClassName="absolute top-0 left-8 text-gray-400"
                         initialContent={content}
                         onChange={onEditorChange}
                     />
