@@ -20,7 +20,7 @@ import { useNoteMutations } from "../-hooks/useNoteMutation";
 export function Note() {
     const params = useParams({ from: "/_auth/notes/$noteId" });
 
-    const { open } = useSidebar();
+    const { open, isMobile } = useSidebar();
 
     const { isSyncing } = useSyncContext();
 
@@ -143,7 +143,7 @@ export function Note() {
                 <div
                     className={cn(
                         "flex gap-1 items-center rounded-xl",
-                        open ? "invisible pointer-events-none" : "visible",
+                        !isMobile && open && "invisible pointer-events-none",
                     )}
                 >
                     <SidebarTrigger />
