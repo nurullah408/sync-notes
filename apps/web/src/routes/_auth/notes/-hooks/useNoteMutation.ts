@@ -48,7 +48,7 @@ export function useNoteMutations({ noteId }: UseNoteMutationsParams) {
             });
 
             //Sidebar Update
-            if (variables.title !== undefined || variables.title === "") {
+            if (variables.title !== undefined) {
                 queryClient.setQueryData<ApiResponse<SidebarData>>(
                     sidebarQueryKey,
                     (old) => {
@@ -105,7 +105,74 @@ export function useNoteMutations({ noteId }: UseNoteMutationsParams) {
         },
     });
 
+    const moveNoteMutation = useMutation({
+        mutationKey: ["notes", "update"],
+        mutationFn: updateNote,
+        scope: {
+            id: `note-${noteId}`,
+        },
+        onMutate: async (variables) => {
+            const sidebarQueryKey = QUERY_KEYS.sidebar;
+            // prevent an in-flight request
+            await Promise.all([
+                queryClient.cancelQueries({ queryKey: sidebarQueryKey }),
+            ]);
+
+            const previousSidebar =
+                queryClient.getQueryData<ApiResponse<SidebarData>>(
+                    sidebarQueryKey,
+                );
+
+            //Sidebar Update
+            if (variables.folderId !== undefined) {
+                queryClient.setQueryData<ApiResponse<SidebarData>>(
+                    sidebarQueryKey,
+                    (old) => {
+                        if (!old) return old;
+
+                        return {
+                            ...old,
+                            data: {
+                                ...old.data,
+                                notes: old.data.notes.map((note) =>
+                                    note.id === variables.id
+                                        ? {
+                                              ...note,
+                                              foldeId: variables.folderId,
+                                          }
+                                        : note,
+                                ),
+                            },
+                        };
+                    },
+                );
+            }
+
+            return {
+                previousSidebar,
+                sidebarQueryKey,
+            };
+        },
+        onError: (_error, _variables, context) => {
+            // Roll back sidebar if request fails
+            if (context?.previousSidebar) {
+                queryClient.setQueryData(
+                    context.sidebarQueryKey,
+                    context.previousSidebar,
+                );
+            }
+        },
+        onSuccess: (response, variables) => {
+            // Reconcile the cache with the server's authoritative response.
+            queryClient.setQueryData(
+                QUERY_KEYS.notesDetail(variables.id),
+                response,
+            );
+        },
+    });
+
     return {
         updateNoteMutation,
+        moveNoteMutation,
     };
 }

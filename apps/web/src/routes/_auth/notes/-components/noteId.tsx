@@ -9,7 +9,6 @@ import { useParams } from "@tanstack/react-router";
 import { $getRoot, type EditorState } from "lexical";
 import { Check, LoaderPinwheel, Search } from "lucide-react";
 import { type ChangeEvent } from "react";
-import { useSyncContext } from "@/context/SyncContext";
 import { useGlobalStore } from "@/store/store.tsx";
 import Profile from "@/components/Profile";
 import { useQuery } from "@tanstack/react-query";
@@ -21,8 +20,6 @@ export function Note() {
     const params = useParams({ from: "/_auth/notes/$noteId" });
 
     const { open, isMobile } = useSidebar();
-
-    const { isSyncing } = useSyncContext();
 
     const openModal = useGlobalStore((state) => state.openModal);
 
@@ -110,7 +107,7 @@ export function Note() {
                     {/* Note header right side */}
                     <div className="flex gap-1 items-center">
                         <div className="flex items-center gap-1">
-                            {isSyncing ? (
+                            {updateNoteMutation.isPending ? (
                                 <>
                                     <LoaderPinwheel className="text-gray-500 duration-400 animate-spin size-4" />
                                 </>
@@ -159,7 +156,7 @@ export function Note() {
                 {/* Note header right side */}
                 <div className="flex gap-1 items-center">
                     <div className="flex items-center gap-1">
-                        {isSyncing ? (
+                        {updateNoteMutation.isPending ? (
                             <>
                                 <LoaderPinwheel className="text-gray-500 duration-400 animate-spin size-4" />
                             </>
