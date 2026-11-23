@@ -1,6 +1,7 @@
 import { updateNote } from "@/api/notes.api";
 import { queryClient } from "@/lib/query-client";
 import { QUERY_KEYS } from "@/lib/query-keys";
+import { showRetryCountdownToast } from "@/lib/utils";
 import type { Note } from "@/types/entities/Note";
 import type { ApiResponse } from "@/types/response/ApiResponse";
 import type { SidebarData } from "@/types/response/Sidebar";
@@ -17,6 +18,8 @@ export function useNoteMutations({ noteId }: UseNoteMutationsParams) {
         scope: {
             id: `note-${noteId}`,
         },
+        retry: 3,
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
         onMutate: async (variables) => {
             const noteQueryKey = QUERY_KEYS.notesDetail(noteId);
             const sidebarQueryKey = QUERY_KEYS.sidebar;
@@ -81,12 +84,9 @@ export function useNoteMutations({ noteId }: UseNoteMutationsParams) {
             };
         },
         onError: (_error, _variables, context) => {
-            // Roll back note if request fails.
+            // Show error for note if request fails.
             if (context?.previousNote) {
-                queryClient.setQueryData(
-                    context.noteQueryKey,
-                    context.previousNote,
-                );
+                showRetryCountdownToast(10, _error?.message);
             }
             // Roll back sidebar if request fails
             if (context?.previousSidebar) {
@@ -100,7 +100,13 @@ export function useNoteMutations({ noteId }: UseNoteMutationsParams) {
             // Reconcile the cache with the server's authoritative response.
             queryClient.setQueryData(
                 QUERY_KEYS.notesDetail(variables.id),
-                response,
+                (old) =>
+                    old
+                        ? {
+                              ...old,
+                              updatedAt: response.data.updatedAt,
+                          }
+                        : old,
             );
         },
     });
@@ -166,7 +172,8 @@ export function useNoteMutations({ noteId }: UseNoteMutationsParams) {
             // Reconcile the cache with the server's authoritative response.
             queryClient.setQueryData(
                 QUERY_KEYS.notesDetail(variables.id),
-                response,
+                (old) =>
+                    old ? { ...old, folderId: response.data.folderId } : old,
             );
         },
     });
