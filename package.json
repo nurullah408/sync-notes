@@ -11,6 +11,7 @@
         "dev:api:prod": "pnpm --filter @sync-notes/api start:dev:prod",
         "build:api": "pnpm --filter @sync-notes/api build",
         "build:web": "pnpm --filter @sync-notes/web build",
+        "preview:web": "pnpm --filter @sync-notes/web preview",
         "build": "pnpm -r build",
         "lint": "pnpm -r lint",
         "test": "echo \"Error: no test specified\" && exit 1"

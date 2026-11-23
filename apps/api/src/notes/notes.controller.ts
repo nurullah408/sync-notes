@@ -27,19 +27,16 @@ export class NotesController {
     private readonly syncService: SyncService,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   create(@GetUser() user: RequestUser, @Body() createNoteDto: CreateNoteDto) {
     return this.notesService.create(user.id, createNoteDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@GetUser() user: RequestUser) {
     return this.notesService.findAll(user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('search')
   async searchNotes(
     @GetUser() user: RequestUser,
@@ -48,13 +45,11 @@ export class NotesController {
     return this.notesService.searchNotes(user.id, searchDto.query);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@GetUser() user: RequestUser, @Param('id') id: string) {
     return this.notesService.findOne(user.id, id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @GetUser() user: RequestUser,
@@ -64,7 +59,6 @@ export class NotesController {
     return this.notesService.update(user.id, id, updateNoteDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@GetUser() user: RequestUser, @Param('id') id: string) {
     return this.notesService.remove(user.id, id);
