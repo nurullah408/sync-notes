@@ -152,3 +152,12 @@ export function transformBlock(
         },
     );
 }
+
+export function sameRect(a: DOMRect, b: DOMRect) {
+    return (
+        a.top === b.top &&
+        a.left === b.left &&
+        a.width === b.width &&
+        a.height === b.height
+    );
+}

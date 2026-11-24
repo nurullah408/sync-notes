@@ -6,12 +6,15 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 
 // Import the necessary core nodes for Markdown rendering
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
-import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { CodeNode, CodeHighlightNode } from "@lexical/code";
+import { TableNode, TableCellNode, TableRowNode } from "@lexical/table";
+
 // Import the transformers
 import {
     HEADING,
@@ -28,6 +31,7 @@ import { FloatingToolbarPlugin } from "@/lib/lexical/plugins/FloatingBarPlugin";
 import { InitializePlugin } from "@/lib/lexical/plugins/InitializePlugin";
 import { SlashMenuPlugin } from "@/lib/lexical/plugins/SlashMenuPlugin";
 import { DraggableBlocksPlugin } from "@/lib/lexical/plugins/DraggableBlocksPlugin";
+import TableActionButtonsPlugin from "@/lib/lexical/plugins/TableActionButtonsPlugin";
 
 interface EditorProps {
     initialContent: string;
@@ -65,6 +69,9 @@ export function Editor({
             ListItemNode,
             CodeNode,
             CodeHighlightNode,
+            TableNode,
+            TableCellNode,
+            TableRowNode,
         ],
     };
 
@@ -133,6 +140,8 @@ export function Editor({
                     transformers={CUSTOM_MARKDOWN_TRANSFORMERS}
                 />
                 <SlashMenuPlugin />
+                <TablePlugin />
+                <TableActionButtonsPlugin />
                 {anchorElement && (
                     <DraggableBlocksPlugin anchorElement={anchorElement} />
                 )}

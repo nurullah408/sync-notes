@@ -16,6 +16,7 @@ import {
     INSERT_ORDERED_LIST_COMMAND,
     INSERT_UNORDERED_LIST_COMMAND,
 } from "@lexical/list";
+import { INSERT_TABLE_COMMAND } from "@lexical/table";
 // React Imports
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -27,6 +28,7 @@ import {
     List,
     ListOrdered,
     Quote,
+    Table,
     Type,
 } from "lucide-react";
 import { SlashMenuOption } from "@/lib/lexical/classes/SlashMenuOption";
@@ -173,6 +175,19 @@ export function SlashMenuPlugin() {
                     },
                 },
                 <Quote key={"quote-icon"} className="size-4" />,
+            ),
+            new SlashMenuOption(
+                "Table",
+                {
+                    onSelect: () => {
+                        editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+                            columns: String(3),
+                            includeHeaders: true,
+                            rows: String(3),
+                        });
+                    },
+                },
+                <Table key={"table-icon"} className="size-4" />,
             ),
         ];
 

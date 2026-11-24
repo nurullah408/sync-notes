@@ -139,6 +139,7 @@ export const EDITOR_THEME = {
         "absolute top-0 h-full w-4 -mr-2 rounded-sm bg-muted hover:bg-accent cursor-pointer",
     tableAddRows:
         "absolute left-0 w-full h-4 -mb-2 rounded-sm bg-muted hover:bg-accent cursor-pointer",
+    tableScrollableWrapper: "overflow-x-auto mb-5 scrollbar-width-none",
 } satisfies EditorThemeClasses;
 
 // Text Format default state
